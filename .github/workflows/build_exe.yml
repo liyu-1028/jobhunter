@@ -1,0 +1,35 @@
+name: Build Windows EXE Release
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build-windows-exe:
+    runs-on: windows-latest
+
+    steps:
+    - name: 📥 Checkout repository
+      uses: actions/checkout@v4
+
+    - name: 🐍 Set up Python 3.12
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+        cache: 'pip'
+
+    - name: 📦 Install Dependencies & PyInstaller
+      run: |
+        python -m pip install --upgrade pip
+        pip install pyinstaller requests beautifulsoup4 fastapi uvicorn pydantic jinja2 openai
+
+    - name: ⚙️ Build JobHunter.exe via PyInstaller
+      run: |
+        pyinstaller --clean jobhunter.spec
+
+    - name: 📤 Upload Windows EXE Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: JobHunter_Windows_Executable
+        path: dist/JobHunter.exe
