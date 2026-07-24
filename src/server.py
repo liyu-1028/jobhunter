@@ -1,7 +1,7 @@
 import os
 import sys
 
-# 将项目根目录添加到 Python 模块搜索路径 sys.path
+# 动态将项目根目录加入 sys.path
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
@@ -9,6 +9,7 @@ if PROJECT_ROOT not in sys.path:
 from datetime import datetime
 from typing import Optional
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, FileResponse
 from pydantic import BaseModel
 
@@ -20,6 +21,15 @@ from src.db import JobDatabase
 from src.renderer import HTMLReportRenderer
 
 app = FastAPI(title="JobHunter RESTful API Server", description="多维度岗位匹配、央国企及高校辅导员 Fetch 服务")
+
+# 解决浏览器 CORS 跨域限制
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 db = JobDatabase()
 engine = create_default_engine()

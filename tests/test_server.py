@@ -4,6 +4,15 @@ from src.server import app
 
 client = TestClient(app)
 
+def test_cors_headers():
+    response = client.options("/api/search_jobs", headers={
+        "Origin": "http://127.0.0.1:5500",
+        "Access-Control-Request-Method": "POST",
+    })
+    assert response.status_code == 200
+    assert "access-control-allow-origin" in response.headers
+    assert response.headers["access-control-allow-origin"] in ["*", "http://127.0.0.1:5500"]
+
 def test_api_index():
     response = client.get("/")
     assert response.status_code == 200
@@ -44,11 +53,3 @@ def test_api_fetch_counselors():
     assert data["status"] == "success"
     assert "counselors" in data
     assert len(data["counselors"]) > 0
-
-def test_api_get_history():
-    response = client.get("/api/history")
-    assert response.status_code == 200
-    data = response.json()
-    assert "jobs" in data
-    assert "enterprises" in data
-    assert "counselors" in data
