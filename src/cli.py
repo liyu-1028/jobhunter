@@ -10,6 +10,7 @@ from rich.table import Table
 from src.models import UserProfile
 from src.deepseek_client import DeepSeekJobHunter
 from src.renderer import HTMLReportRenderer
+from src.db import JobDatabase
 
 console = Console()
 
@@ -109,7 +110,7 @@ def run_cli():
     
     console.print(Panel.fit(
         "[bold magenta]🚀 JobHunter - 智能岗位搜索与可视化投递助手[/bold magenta]\n"
-        "[dim]基于 DeepSeek AI 大模型引擎，助您高效精准投递心仪岗位[/dim]",
+        "[dim]基于 DeepSeek AI 大模型引擎 + 本地 SQLite 历史库持久化存储[/dim]",
         border_style="cyan"
     ))
 
@@ -118,7 +119,6 @@ def run_cli():
     profile = None
 
     if existing_profile:
-        # 展显预存配置表格
         table = Table(title="📋 已加载保存的求职 Profile", border_style="dim")
         table.add_column("配置项", style="cyan")
         table.add_column("设定值", style="white")
@@ -154,10 +154,15 @@ def run_cli():
     with console.status("[bold green]🤖 DeepSeek 正在联网检索分析最匹配的岗位，请稍候...", spinner="dots"):
         result = hunter.search_jobs(profile)
 
-    console.print(f"\n[bold green]✅ 成功匹配并评估出 {len(result.jobs)} 个符合条件的精选岗位！[/bold green]")
+    # 4. 持久化数据落库 SQLite
+    db = JobDatabase()
+    db.save_jobs(result.jobs)
+    all_history_jobs = db.get_all_jobs()
 
-    # 4. 渲染可视化 HTML 报告
+    console.print(f"\n[bold green]✅ 本次匹配出 {len(result.jobs)} 个精选岗位，已写入本地数据库！(历史全量库共 {len(all_history_jobs)} 个岗位)[/bold green]")
+
+    # 5. 渲染可视化 HTML 报告（集成历史数据全量检索）
     renderer = HTMLReportRenderer()
-    report_file = renderer.render(result, open_browser=True)
+    report_file = renderer.render(result, history_jobs=all_history_jobs, open_browser=True)
 
     console.print("\n[bold cyan]🎉 任务完成！赶快去浏览器查看您的可视化岗位投递仪表盘吧！[/bold cyan]")

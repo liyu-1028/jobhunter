@@ -1,8 +1,9 @@
 import os
 import webbrowser
 from datetime import datetime
+from typing import List, Optional
 from jinja2 import Environment, FileSystemLoader
-from src.models import SearchResult
+from src.models import SearchResult, JobItem
 
 
 class HTMLReportRenderer:
@@ -18,12 +19,17 @@ class HTMLReportRenderer:
         self.env = Environment(loader=FileSystemLoader(self.template_dir))
         self.template = self.env.get_template("report_template.html")
 
-    def render(self, result: SearchResult, open_browser: bool = True) -> str:
+    def render(self, result: SearchResult, history_jobs: Optional[List[JobItem]] = None, open_browser: bool = True) -> str:
         """渲染 HTML 报告并写入文件，返回生成的文件绝对路径"""
+        
+        # 如果未提供 history_jobs，默认使用当前搜索结果的 jobs
+        history = history_jobs if history_jobs is not None else result.jobs
+
         rendered_html = self.template.render(
             search_time=result.search_time,
             profile=result.profile,
             jobs=result.jobs,
+            history_jobs=history,
             summary=result.summary
         )
 
