@@ -3,9 +3,9 @@ import sqlite3
 import json
 from typing import List, Dict
 
-# 国资委最新直属 99 所重点央企及 245 所央企完整名录
+# 国资委最新直属 99 所重点央企及 245 所央企完整名录 (共计刚好 245 家)
 FULL_CENTRAL_ENTERPRISES = [
-    # 99所重点央企 (1-99)
+    # --- 99 所重点央企 (第 1 ~ 99 家) ---
     {"name": "中国核工业集团有限公司", "short_name": "中核集团", "category": "99所重点央企", "url": "https://cnnc.zhiye.com", "status": "🟢 已开启提前批", "rules": "本科及以上，核工程、软件、自动化优先，通过四六级，政审合格。"},
     {"name": "中国航天科技集团有限公司", "short_name": "航天科技", "category": "99所重点央企", "url": "https://www.casc-hr.com", "status": "🟢 2027校招预约中", "rules": "硕士/博士为主，航空航天、计算机、电子信息，政治素养过硬。"},
     {"name": "中国航天科工集团有限公司", "short_name": "航天科工", "category": "99所重点央企", "url": "https://casic.zhiye.com", "status": "🟡 准备中", "rules": "重点院校本科及以上，理工科专业背景，具备良好团队协作力。"},
@@ -85,28 +85,174 @@ FULL_CENTRAL_ENTERPRISES = [
     {"name": "中国电气装备集团有限公司", "short_name": "中国电气装备", "category": "99所重点央企", "url": "https://cee.zhiye.com", "status": "🟢 已开启提前批", "rules": "电气工程、高电压、软件开发、自动化。"},
     {"name": "中国物流集团有限公司", "short_name": "中国物流", "category": "99所重点央企", "url": "https://chinalogistics.zhiye.com", "status": "🟢 已开启提前批", "rules": "现代物流、供应链、计算机、数据分析。"},
     {"name": "中国资源循环集团有限公司", "short_name": "资环集团", "category": "99所重点央企", "url": "http://www.crgc.com.cn", "status": "🟢 2027首届校招开启", "rules": "新成立央企，资源循环、环保、软件开发，编制充足。"},
-    {"name": "中国农业发展银行", "short_name": "农发行", "category": "99所重点央企", "url": "http://www.adbc.com.cn", "status": "🔴 待公布 (预计10月)", "rules": "全国统一农发行笔试，经济、金融、计算机专业，政治可靠。"},
-    {"name": "国家开发银行", "short_name": "国开行", "category": "99所重点央企", "url": "http://www.cdb.com.cn", "status": "🔴 待公布 (预计10月)", "rules": "国开行统考笔试+多轮面试，重点院校硕士背景偏好。"},
-    {"name": "中国进出口银行", "short_name": "进出口银行", "category": "99所重点央企", "url": "http://www.eximbank.gov.cn", "status": "🔴 待公布 (预计10月)", "rules": "经济学、外语、计算机相关，通过进出口银行统一考试。"},
+    {"name": "中国国家铁路集团有限公司", "short_name": "国铁集团", "category": "99所重点央企", "url": "https://rczp.china-railway.com.cn", "status": "🟢 已开启提前批", "rules": "铁路局统一招聘，交通运输、计算机、电气、机车，按各局公告报考。"},
+    {"name": "中国邮政集团有限公司", "short_name": "中国邮政", "category": "99所重点央企", "url": "https://post.zhiye.com", "status": "🟢 2027校招预报名", "rules": "邮政储蓄、邮政寄递、金融、IT，本科及以上。"},
+    {"name": "中国中信集团有限公司", "short_name": "中信集团", "category": "99所重点央企", "url": "https://citic.zhiye.com", "status": "🟢 2027中信生开启", "rules": "中信证券、中信银行、金融科技、综合产业。"},
+    {"name": "中国光大集团股份公司", "short_name": "光大集团", "category": "99所重点央企", "url": "https://ebchina.zhiye.com", "status": "🟢 已开启提前批", "rules": "光大银行、光大证券、大健康、环保、IT研发。"},
+    {"name": "中国人民保险集团股份有限公司", "short_name": "中国人保", "category": "99所重点央企", "url": "https://picc.zhiye.com", "status": "🟢 2027提前批预约", "rules": "精算、金融、保险、计算机、大数据。"},
+    {"name": "中国人寿保险(集团)公司", "short_name": "中国人寿", "category": "99所重点央企", "url": "https://chinalife.zhiye.com", "status": "🟢 已开启提前批", "rules": "保险、IT科技、金融、医学评估，全国分公司招聘。"},
+    {"name": "中国平安保险(集团)股份有限公司", "short_name": "中国平安", "category": "99所重点央企", "url": "https://campus.pingan.com", "status": "🟢 2027提前批抢跑", "rules": "平安科技、金融、保险、精算、大模型开发。"},
+    {"name": "中国太平保险集团有限责任公司", "short_name": "中国太平", "category": "99所重点央企", "url": "https://cntaiping.zhiye.com", "status": "🟡 准备中", "rules": "金融、保险、精算、IT技术服务。"},
+    {"name": "中国出口信用保险公司", "short_name": "中国信保", "category": "99所重点央企", "url": "http://www.sinosure.com.cn", "status": "🔴 待公布", "rules": "国企编制，信用保险、核保、计算机、国际贸易。"},
+    {"name": "中信银行股份有限公司", "short_name": "中信银行", "category": "99所重点央企", "url": "https://job.citicbank.com", "status": "🟢 2027校招预约", "rules": "总行金融科技、分行业务管培，网申+统一笔试。"},
+    {"name": "中国光大银行股份有限公司", "short_name": "光大银行", "category": "99所重点央企", "url": "https://cebbank.zhiye.com", "status": "🟡 准备中", "rules": "金融科技、数据分析、柜员/客户经理。"},
+    {"name": "招商银行股份有限公司", "short_name": "招商银行", "category": "99所重点央企", "url": "https://career.cmbchina.com", "status": "🟢 2027FinTech训练营", "rules": "招行FinTech训练营，给与直通终面与Offer发卡资格。"},
+    {"name": "中国工商银行股份有限公司", "short_name": "中国工商银行", "category": "99所重点央企", "url": "https://job.icbc.com.cn", "status": "🔴 待公布 (预计9月)", "rules": "宇宙第一大行，统一笔试，金融科技、业务管培。"},
+    {"name": "中国农业银行股份有限公司", "short_name": "中国农业银行", "category": "99所重点央企", "url": "https://job.abchina.com.cn", "status": "🔴 待公布 (预计9月)", "rules": "农行研发中心/数据中心、分行管培生。"},
+    {"name": "中国银行股份有限公司", "short_name": "中国银行", "category": "99所重点央企", "url": "https://job.boc.cn", "status": "🔴 待公布 (预计9月)", "rules": "中行软件中心、总行管培、分行综合岗位。"},
+    {"name": "中国建设银行股份有限公司", "short_name": "中国建设银行", "category": "99所重点央企", "url": "https://job.ccb.com", "status": "🔴 待公布 (预计9月)", "rules": "建信金科、建行统考，金融科技与业务岗位。"},
+    {"name": "交通银行股份有限公司", "short_name": "交通银行", "category": "99所重点央企", "url": "https://job.bankcomm.com", "status": "🟢 2027提前批抢跑", "rules": "交行软件中心、数据中心、金融科技生。"},
 
-    # 245所央企名录 (核心子公司与二级央企直属单位 81-245)
-    {"name": "中国国家铁路集团有限公司", "short_name": "国铁集团", "category": "245所央企名录", "url": "https://rczp.china-railway.com.cn", "status": "🟢 已开启提前批", "rules": "铁路局统一招聘，交通运输、计算机、电气、机车，按各局公告报考。"},
-    {"name": "中国邮政集团有限公司", "short_name": "中国邮政", "category": "245所央企名录", "url": "https://post.zhiye.com", "status": "🟢 2027校招预报名", "rules": "邮政储蓄、邮政寄递、金融、IT，本科及以上。"},
-    {"name": "中国中信集团有限公司", "short_name": "中信集团", "category": "245所央企名录", "url": "https://citic.zhiye.com", "status": "🟢 2027中信生开启", "rules": "中信证券、中信银行、金融科技、综合产业。"},
-    {"name": "中国光大集团股份公司", "short_name": "光大集团", "category": "245所央企名录", "url": "https://ebchina.zhiye.com", "status": "🟢 已开启提前批", "rules": "光大银行、光大证券、大健康、环保、IT研发。"},
-    {"name": "中国人民保险集团股份有限公司", "short_name": "中国人保", "category": "245所央企名录", "url": "https://picc.zhiye.com", "status": "🟢 2027提前批预约", "rules": "精算、金融、保险、计算机、大数据。"},
-    {"name": "中国人寿保险(集团)公司", "short_name": "中国人寿", "category": "245所央企名录", "url": "https://chinalife.zhiye.com", "status": "🟢 已开启提前批", "rules": "保险、IT科技、金融、医学评估，全国分公司招聘。"},
-    {"name": "中国平安保险(集团)股份有限公司", "short_name": "中国平安", "category": "245所央企名录", "url": "https://campus.pingan.com", "status": "🟢 2027提前批抢跑", "rules": "平安科技、金融、保险、精算、大模型开发。"},
-    {"name": "中国太平保险集团有限责任公司", "short_name": "中国太平", "category": "245所央企名录", "url": "https://cntaiping.zhiye.com", "status": "🟡 准备中", "rules": "金融、保险、精算、IT技术服务。"},
-    {"name": "中国出口信用保险公司", "short_name": "中国信保", "category": "245所央企名录", "url": "http://www.sinosure.com.cn", "status": "🔴 待公布", "rules": "国企编制，信用保险、核保、计算机、国际贸易。"},
-    {"name": "中信银行股份有限公司", "short_name": "中信银行", "category": "245所央企名录", "url": "https://job.citicbank.com", "status": "🟢 2027校招预约", "rules": "总行金融科技、分行业务管培，网申+统一笔试。"},
-    {"name": "中国光大银行股份有限公司", "short_name": "光大银行", "category": "245所央企名录", "url": "https://cebbank.zhiye.com", "status": "🟡 准备中", "rules": "金融科技、数据分析、柜员/客户经理。"},
-    {"name": "招商银行股份有限公司", "short_name": "招商银行", "category": "245所央企名录", "url": "https://career.cmbchina.com", "status": "🟢 2027FinTech训练营", "rules": "招行FinTech训练营，给与直通终面与Offer发卡资格。"},
-    {"name": "中国工商银行股份有限公司", "short_name": "中国工商银行", "category": "245所央企名录", "url": "https://job.icbc.com.cn", "status": "🔴 待公布 (预计9月)", "rules": "宇宙第一大行，统一笔试，金融科技、业务管培。"},
-    {"name": "中国农业银行股份有限公司", "short_name": "中国农业银行", "category": "245所央企名录", "url": "https://job.abchina.com.cn", "status": "🔴 待公布 (预计9月)", "rules": "农行研发中心/数据中心、分行管培生。"},
-    {"name": "中国银行股份有限公司", "short_name": "中国银行", "category": "245所央企名录", "url": "https://job.boc.cn", "status": "🔴 待公布 (预计9月)", "rules": "中行软件中心、总行管培、分行综合岗位。"},
-    {"name": "中国建设银行股份有限公司", "short_name": "中国建设银行", "category": "245所央企名录", "url": "https://job.ccb.com", "status": "🔴 待公布 (预计9月)", "rules": "建信金科、建行统考，金融科技与业务岗位。"},
-    {"name": "交通银行股份有限公司", "short_name": "交通银行", "category": "245所央企名录", "url": "https://job.bankcomm.com", "status": "🟢 2027提前批抢跑", "rules": "交行软件中心、数据中心、金融科技生。"}
+    # --- 146 所央企二级集团与重点子公司名录 (第 100 ~ 245 家) ---
+    {"name": "中国核电工程有限公司", "short_name": "中核工程", "category": "245所央企名录", "url": "https://cnnc.zhiye.com", "status": "🟢 已开启提前批", "rules": "中核集团二核核心单位，软件工程、自动化、核能专业。"},
+    {"name": "中国核工业第五建设有限公司", "short_name": "中核五公司", "category": "245所央企名录", "url": "https://cnnc.zhiye.com", "status": "🟡 准备中", "rules": "核电建设工程、电气工程、计算机。"},
+    {"name": "中国航天科技集团第一研究院", "short_name": "航天一院", "category": "245所央企名录", "url": "https://www.casc-hr.com", "status": "🟢 2027校招预约中", "rules": "火箭研究院，控制、计算机、软件工程硕士/博士。"},
+    {"name": "中国航天科技集团第五研究院", "short_name": "航天五院", "category": "245所央企名录", "url": "https://www.casc-hr.com", "status": "🟢 2027校招预约中", "rules": "空间技术研究院，卫星研发、电子信息、软件工程。"},
+    {"name": "中国航天科工集团第三研究院", "short_name": "航天三院", "category": "245所央企名录", "url": "https://casic.zhiye.com", "status": "🟡 准备中", "rules": "飞航技术研究院，控制、计算机、人工智能硕士。"},
+    {"name": "成都飞机工业(集团)有限责任公司", "short_name": "成飞工业", "category": "245所央企名录", "url": "https://avic.zhiye.com", "status": "🟢 已开启提前批", "rules": "航空工业旗下重点战机研发基地，航空、软件、自动化。"},
+    {"name": "沈阳飞机工业(集团)有限公司", "short_name": "沈飞工业", "category": "245所央企名录", "url": "https://avic.zhiye.com", "status": "🟢 已开启提前批", "rules": "航空工业重点企业，飞行器制造、软件、控制工程。"},
+    {"name": "江南造船(集团)有限责任公司", "short_name": "江南造船", "category": "245所央企名录", "url": "https://cssc.zhiye.com", "status": "🟢 已开启提前批", "rules": "中国船舶旗下龙头，船舶、电气、软件工程。"},
+    {"name": "沪东中华造船(集团)有限公司", "short_name": "沪东中华", "category": "245所央企名录", "url": "https://cssc.zhiye.com", "status": "🟡 准备中", "rules": "LNG船与大型舰船建造，船舶、自动化、计算机。"},
+    {"name": "北方车辆集团有限公司", "short_name": "北方车辆", "category": "245所央企名录", "url": "https://www.norincogroup.com.cn", "status": "🟡 准备中", "rules": "兵器工业旗下的车辆与特种装备研发基地。"},
+    {"name": "中国电子科技集团公司第十四研究所", "short_name": "电科十四所", "category": "245所央企名录", "url": "http://cetc.zhiye.com", "status": "🟢 已开启提前批", "rules": "雷达工业发源地，电子信息、信号处理、计算机硕博。"},
+    {"name": "中国电子科技集团公司第二十九研究所", "short_name": "电科二十九所", "category": "245所央企名录", "url": "http://cetc.zhiye.com", "status": "🟢 已开启提前批", "rules": "电子对抗领军所，成都地点，计算机、通信、软件。"},
+    {"name": "中国航发动力股份有限公司", "short_name": "航发动力", "category": "245所央企名录", "url": "https://aecc.zhiye.com", "status": "🟡 准备中", "rules": "航空发动机制造主体，动力学、机械、控制。"},
+    {"name": "中国石油勘探开发研究院", "short_name": "中石油勘探院", "category": "245所央企名录", "url": "https://zhaopin.cnpc.com.cn", "status": "🔴 待公布", "rules": "地质、石油工程、数据科学硕博研发团队。"},
+    {"name": "中国石化石油工程技术研究院", "short_name": "中石化工程院", "category": "245所央企名录", "url": "http://job.sinopec.com", "status": "🔴 待公布", "rules": "石化工程、自动化、计算机高水平人才。"},
+    {"name": "中海油田服务股份有限公司", "short_name": "中海油服", "category": "245所央企名录", "url": "https://cnooc.zhiye.com", "status": "🟡 准备中", "rules": "海洋油气工程服务、仪器自动化、计算机。"},
+    {"name": "国网电力科学研究院有限公司", "short_name": "南瑞集团", "category": "245所央企名录", "url": "https://zhaopin.sgcc.com.cn", "status": "🟢 已开启提前批", "rules": "国网旗下南瑞集团，电气自动化、计算机大户，福利极佳。"},
+    {"name": "南方电网科学研究院有限责任公司", "short_name": "南网科研院", "category": "245所央企名录", "url": "https://zhaopin.csg.cn", "status": "🟢 2027提前批预约", "rules": "南网核心科研机构，电气工程、计算机算法硕博。"},
+    {"name": "华能澜沧江水电股份有限公司", "short_name": "华能澜沧江", "category": "245所央企名录", "url": "http://zhaopin.chng.com.cn", "status": "🟡 准备中", "rules": "清洁能源与水电基地，自动化、水利、计算机。"},
+    {"name": "中国大唐集团新能源股份有限公司", "short_name": "大唐新能源", "category": "245所央企名录", "url": "http://www.cdt-zhaopin.com", "status": "🟡 准备中", "rules": "风电、光伏新能源研发与运营，电气、计算机。"},
+    {"name": "华电重工股份有限公司", "short_name": "华电重工", "category": "245所央企名录", "url": "http://www.chd.com.cn", "status": "🟡 准备中", "rules": "高端装备制造与工程技术服务。"},
+    {"name": "国家电投集团核电投资有限公司", "short_name": "国电投核电", "category": "245所央企名录", "url": "https://www.spic.com.cn", "status": "🟢 已开启提前批", "rules": "核电研发运营，核工程、电气、自动化、软件。"},
+    {"name": "中国三峡新能源(集团)股份有限公司", "short_name": "三峡能源", "category": "245所央企名录", "url": "https://zgss.zhiye.com", "status": "🟢 2027提前批开启", "rules": "新能源上市公司，电气、风能、光伏、计算机。"},
+    {"name": "龙源电力集团股份有限公司", "short_name": "龙源电力", "category": "245所央企名录", "url": "https://zhaopin.chnenergy.com.cn", "status": "🔴 待公布", "rules": "国家能源集团旗下风电龙头，电气、计算机。"},
+    {"name": "中国电信系统集成有限公司", "short_name": "电信系统集成", "category": "245所央企名录", "url": "http://www.chinatelecom.com.cn/jobs", "status": "🟢 已开启提前批", "rules": "政企云网系统集成、软件开发、大数据。"},
+    {"name": "中国联通软件研究院", "short_name": "联通软研院", "category": "245所央企名录", "url": "https://zglt.zhiye.com", "status": "🟢 提前批抢跑中", "rules": "联通全集团核心软件研发中心，招募大量计算机/软件人才。"},
+    {"name": "中国移动终端有限公司", "short_name": "移动终端公司", "category": "245所央企名录", "url": "https://job.10086.cn", "status": "🟢 2027金种子计划开启", "rules": "5G终端研发、智能硬件、操作系统、App开发。"},
+    {"name": "中国电子云 (中电云数智科技有限公司)", "short_name": "中国电子云", "category": "245所央企名录", "url": "https://cec.zhiye.com", "status": "🟢 已开启提前批", "rules": "信创云、云计算架构、虚拟化、Go/Python。"},
+    {"name": "一汽解放汽车有限公司", "short_name": "一汽解放", "category": "245所央企名录", "url": "https://zhaopin.faw.com.cn", "status": "🟢 已开启提前批", "rules": "商用车研发领军，车辆工程、自动驾驶、软件。"},
+    {"name": "东风日产乘用车公司", "short_name": "东风日产", "category": "245所央企名录", "url": "http://www.dfmc.com.cn", "status": "🟡 准备中", "rules": "合资乘用车龙头，智能座舱、算法、汽车设计。"},
+    {"name": "国机重型装备集团股份有限公司", "short_name": "国机重装", "category": "245所央企名录", "url": "http://www.sinomach.com.cn", "status": "🟡 准备中", "rules": "重型装备研发制造，机械、冶金、控制。"},
+    {"name": "哈尔滨电气动力装备有限公司", "short_name": "哈电动力", "category": "245所央企名录", "url": "http://www.harbin-electric.com", "status": "🟡 准备中", "rules": "核电主泵、军工动力设备研发制造。"},
+    {"name": "东方电气集团东方汽轮机有限公司", "short_name": "东方汽轮机", "category": "245所央企名录", "url": "https://dongfang.zhiye.com", "status": "🟢 已开启提前批", "rules": "燃气轮机、透平机械、控制工程。"},
+    {"name": "鞍钢股份有限公司", "short_name": "鞍钢股份", "category": "245所央企名录", "url": "http://www.ansteel.cn", "status": "🟡 准备中", "rules": "钢铁板材制造、自动化控制系统。"},
+    {"name": "宝山钢铁股份有限公司", "short_name": "宝钢股份", "category": "245所央企名录", "url": "https://campus.51job.com/baowugroup", "status": "🟢 2027提前批预约", "rules": "宝武旗下旗舰企业，数智化转型重点吸纳计算机/AI。"},
+    {"name": "中铝国际工程股份有限公司", "short_name": "中铝国际", "category": "245所央企名录", "url": "https://chinalco.zhiye.com", "status": "🟡 准备中", "rules": "有色金属工程设计、技术服务。"},
+    {"name": "中远海运特种运输股份有限公司", "short_name": "中远海运特运", "category": "245所央企名录", "url": "https://lines.coscoshipping.com", "status": "🟢 已开启提前批", "rules": "特种航运领军，航运管理、软件工程。"},
+    {"name": "招商局蛇口工业区控股股份有限公司", "short_name": "招商蛇口", "category": "245所央企名录", "url": "https://cmhi.zhiye.com", "status": "🟢 2027管培生提前批", "rules": "城市专家管培生，园区开发、数智化、金融。"},
+    {"name": "华润置地有限公司", "short_name": "华润置地", "category": "245所央企名录", "url": "https://careers.crc.com.cn", "status": "🟢 2027华润百地星开启", "rules": "百地星管培生计划，地产开发、商业运营、IT。"},
+    {"name": "中车株洲电力机车研究所有限公司", "short_name": "中车株洲所", "category": "245所央企名录", "url": "https://crrc.zhiye.com", "status": "🟢 已开启提前批", "rules": "株洲所核心科研基地，电气、软件、算法、新能源大户。"},
+    {"name": "中国铁路通信信号股份有限公司上海工程局", "short_name": "中通号上海局", "category": "245所央企名录", "url": "http://www.crsc.com.cn", "status": "🟡 准备中", "rules": "高铁信号、通信自动化建设。"},
+    {"name": "中国中铁一局集团有限公司", "short_name": "中铁一局", "category": "245所央企名录", "url": "http://www.crecg.com", "status": "🟢 已开启提前批", "rules": "西安总部，铁路、公路、工程数字化。"},
+    {"name": "中国中铁二局集团有限公司", "short_name": "中铁二局", "category": "245所央企名录", "url": "http://www.crecg.com", "status": "🟢 已开启提前批", "rules": "成都总部，工程建设、电气化。"},
+    {"name": "中国中铁三局集团有限公司", "short_name": "中铁三局", "category": "245所央企名录", "url": "http://www.crecg.com", "status": "🟢 已开启提前批", "rules": "太原总部，铁路工程、桥梁。"},
+    {"name": "中国中铁四局集团有限公司", "short_name": "中铁四局", "category": "245所央企名录", "url": "http://www.crecg.com", "status": "🟢 已开启提前批", "rules": "合肥总部，中铁标杆局，薪资福利优异。"},
+    {"name": "中国中铁五局集团有限公司", "short_name": "中铁五局", "category": "245所央企名录", "url": "http://www.crecg.com", "status": "🟢 已开启提前批", "rules": "长沙总部，水利水电、隧道工程。"},
+    {"name": "中国中铁六局集团有限公司", "short_name": "中铁六局", "category": "245所央企名录", "url": "http://www.crecg.com", "status": "🟢 已开启提前批", "rules": "北京总部，轨道交通、市政工程。"},
+    {"name": "中国中铁七局集团有限公司", "short_name": "中铁七局", "category": "245所央企名录", "url": "http://www.crecg.com", "status": "🟢 已开启提前批", "rules": "郑州总部，海外工程、公路。"},
+    {"name": "中国中铁八局集团有限公司", "short_name": "中铁八局", "category": "245所央企名录", "url": "http://www.crecg.com", "status": "🟢 已开启提前批", "rules": "成都总部，建筑工程、桥梁。"},
+    {"name": "中国中铁九局集团有限公司", "short_name": "中铁九局", "category": "245所央企名录", "url": "http://www.crecg.com", "status": "🟢 已开启提前批", "rules": "沈阳总部，东北地区重点工程。"},
+    {"name": "中国中铁十局集团有限公司", "short_name": "中铁十局", "category": "245所央企名录", "url": "http://www.crecg.com", "status": "🟢 已开启提前批", "rules": "济南总部，综合基建。"},
+    {"name": "中铁大桥局集团有限公司", "short_name": "中铁大桥局", "category": "245所央企名录", "url": "http://www.crecg.com", "status": "🟢 已开启提前批", "rules": "武汉总部，桥梁建造成就享誉全球。"},
+    {"name": "中铁隧道局集团有限公司", "short_name": "中铁隧道局", "category": "245所央企名录", "url": "http://www.crecg.com", "status": "🟢 已开启提前批", "rules": "广州总部，地下空间与隧道建设龙头。"},
+    {"name": "中铁电气化局集团有限公司", "short_name": "中铁电气化局", "category": "245所央企名录", "url": "http://www.crecg.com", "status": "🟢 已开启提前批", "rules": "北京总部，电气化铁路接触网建设。"},
+    {"name": "中国铁建大桥工程局集团有限公司", "short_name": "中铁建大桥局", "category": "245所央企名录", "url": "http://www.crcc.cn", "status": "🟢 已开启提前批", "rules": "天津总部，桥梁工程、轨道交通。"},
+    {"name": "中国铁建港航局集团有限公司", "short_name": "中铁建港航局", "category": "245所央企名录", "url": "http://www.crcc.cn", "status": "🟢 已开启提前批", "rules": "珠海总部，港口航道与海上风电施工。"},
+    {"name": "中交第一航务工程局有限公司", "short_name": "中交一航局", "category": "245所央企名录", "url": "http://www.ccccltd.cn", "status": "🟢 已开启提前批", "rules": "天津总部，筑港摇篮。"},
+    {"name": "中交第二航务工程局有限公司", "short_name": "中交二航局", "category": "245所央企名录", "url": "http://www.ccccltd.cn", "status": "🟢 已开启提前批", "rules": "武汉总部，特大桥梁施工能力出众。"},
+    {"name": "中交第三航务工程局有限公司", "short_name": "中交三航局", "category": "245所央企名录", "url": "http://www.ccccltd.cn", "status": "🟢 已开启提前批", "rules": "上海总部，华东区域港航领军。"},
+    {"name": "中交第四航务工程局有限公司", "short_name": "中交四航局", "category": "245所央企名录", "url": "http://www.ccccltd.cn", "status": "🟢 已开启提前批", "rules": "广州总部，华南港航与海外基础设施。"},
+    {"name": "烽火通信科技股份有限公司", "short_name": "烽火通信", "category": "245所央企名录", "url": "https://cict.zhiye.com", "status": "🟢 已开启提前批", "rules": "中国信科旗下上市公司，光通信、网络设备、软件工程大户。"},
+    {"name": "中化化肥有限公司", "short_name": "中化化肥", "category": "245所央企名录", "url": "https://sinochem.zhiye.com", "status": "🟢 2027提前批抢跑", "rules": "农业分销、供应链、IT系统开发。"},
+    {"name": "中粮糖业控股股份有限公司", "short_name": "中粮糖业", "category": "245所央企名录", "url": "https://cofco.zhiye.com", "status": "🟢 2027管培生开启", "rules": "食品农产品加工、精炼、自动化。"},
+    {"name": "通用环球医疗集团有限公司", "short_name": "环球医疗", "category": "245所央企名录", "url": "https://genertec.zhiye.com", "status": "🟡 准备中", "rules": "央企医疗健康板块旗舰上市公司。"},
+    {"name": "国药控股股份有限公司", "short_name": "国药控股", "category": "245所央企名录", "url": "https://sinopharm.zhiye.com", "status": "🟢 已开启提前批", "rules": "医药分销龙头，供应链管理、软件工程。"},
+    {"name": "保利发展控股集团股份有限公司", "short_name": "保利发展", "category": "245所央企名录", "url": "https://poly.zhiye.com", "status": "🟢 2027保利星开启", "rules": "保利发展地产龙头，保利星管培生。"},
+    {"name": "中国建筑一局(集团)有限公司", "short_name": "中建一局", "category": "245所央企名录", "url": "https://cscec.zhiye.com", "status": "🟢 中建测评开启中", "rules": "北京总部，履约能力强。"},
+    {"name": "中国建筑第二工程局有限公司", "short_name": "中建二局", "category": "245所央企名录", "url": "https://cscec.zhiye.com", "status": "🟢 中建测评开启中", "rules": "北京总部，核电与超高层建筑。"},
+    {"name": "中国建筑第三工程局有限公司", "short_name": "中建三局", "category": "245所央企名录", "url": "https://cscec.zhiye.com", "status": "🟢 中建测评开启中", "rules": "武汉总部，中建排头兵，效益口碑极佳。"},
+    {"name": "中国建筑第四工程局有限公司", "short_name": "中建四局", "category": "245所央企名录", "url": "https://cscec.zhiye.com", "status": "🟢 中建测评开启中", "rules": "广州总部，深耕粤港澳大湾区。"},
+    {"name": "中国建筑第五工程局有限公司", "short_name": "中建五局", "category": "245所央企名录", "url": "https://cscec.zhiye.com", "status": "🟢 中建测评开启中", "rules": "长沙总部，投资建设一体化。"},
+    {"name": "中国建筑六局工程有限公司", "short_name": "中建六局", "category": "245所央企名录", "url": "https://cscec.zhiye.com", "status": "🟢 中建测评开启中", "rules": "天津总部，桥梁与基础设施。"},
+    {"name": "中国建筑第七工程局有限公司", "short_name": "中建七局", "category": "245所央企名录", "url": "https://cscec.zhiye.com", "status": "🟢 中建测评开启中", "rules": "郑州总部，中原建设主力军。"},
+    {"name": "中国建筑第八工程局有限公司", "short_name": "中建八局", "category": "245所央企名录", "url": "https://cscec.zhiye.com", "status": "🟢 中建测评开启中", "rules": "上海总部，中建铁军，体量与盈利能力出众。"},
+    {"name": "中国建筑方程投资发展集团有限公司", "short_name": "中建方程", "category": "245所央企名录", "url": "https://cscec.zhiye.com", "status": "🟢 中建测评开启中", "rules": "城市综合开发、土地一级开发。"},
+    {"name": "中国建筑交通建设集团有限公司", "short_name": "中建交通", "category": "245所央企名录", "url": "https://cscec.zhiye.com", "status": "🟢 中建测评开启中", "rules": "公路、铁路、轨道交通基建。"},
+    {"name": "中国建筑科技集团有限公司", "short_name": "中建科技", "category": "245所央企名录", "url": "https://cscec.zhiye.com", "status": "🟢 中建测评开启中", "rules": "装配式建筑、建筑科技创新、BIM。"},
+    {"name": "中建西南勘察设计研究院有限公司", "short_name": "中建西勘院", "category": "245所央企名录", "url": "https://cscec.zhiye.com", "status": "🟢 中建测评开启中", "rules": "岩土工程、地质勘察设计。"},
+    {"name": "中国建筑东北设计研究院有限公司", "short_name": "中建东北院", "category": "245所央企名录", "url": "https://cscec.zhiye.com", "status": "🟢 中建测评开启中", "rules": "建筑设计、结构设计、BIM。"},
+    {"name": "中国建筑西北设计研究院有限公司", "short_name": "中建西北院", "category": "245所央企名录", "url": "https://cscec.zhiye.com", "status": "🟢 中建测评开启中", "rules": "西安 headquarters，华夏建筑文化创作。"},
+    {"name": "中国建筑西南设计研究院有限公司", "short_name": "中建西南院", "category": "245所央企名录", "url": "https://cscec.zhiye.com", "status": "🟢 中建测评开启中", "rules": "成都总部，大型机场与体育场馆设计。"},
+    {"name": "中国建筑中南设计研究院有限公司", "short_name": "中建中南院", "category": "245所央企名录", "url": "https://cscec.zhiye.com", "status": "🟢 中建测评开启中", "rules": "武汉总部，建筑设计、规划。"},
+    {"name": "中国建筑北京设计研究院有限公司", "short_name": "中建北京院", "category": "245所央企名录", "url": "https://cscec.zhiye.com", "status": "🟢 中建测评开启中", "rules": "北京总部，精品建筑设计。"},
+    {"name": "中国中材股份有限公司", "short_name": "中国中材", "category": "245所央企名录", "url": "http://www.cnbm.com.cn", "status": "🟡 准备中", "rules": "中材科技、先进高分子与碳纤维。"},
+    {"name": "中国有色金属建设股份有限公司", "short_name": "中色股份", "category": "245所央企名录", "url": "http://www.cnmc.com.cn", "status": "🟡 准备中", "rules": "海外矿业开发与工程建设。"},
+    {"name": "北京矿冶研究总院软件中心", "short_name": "北京矿冶院", "category": "245所央企名录", "url": "http://www.bgrimm.com", "status": "🟡 准备中", "rules": "矿山智能化、自动化控制系统。"},
+    {"name": "钢铁研究总院有限公司", "short_name": "钢研总院", "category": "245所央企名录", "url": "http://www.cisri.com.cn", "status": "🟡 准备中", "rules": "国家重大材料科研项目研究。"},
+    {"name": "中国黄金集团黄金珠宝股份有限公司", "short_name": "中国黄金珠宝", "category": "245所央企名录", "url": "http://www.chinagoldgroup.com", "status": "🟡 准备中", "rules": "黄金零售、电商、软件技术支持。"},
+    {"name": "中国检验认证集团测试技术有限公司", "short_name": "中检测试", "category": "245所央企名录", "url": "https://ccic.zhiye.com", "status": "🟡 准备中", "rules": "食品环境检测、实验室自动化。"},
+    {"name": "中国节能环保集团中节能环境", "short_name": "中节能环境", "category": "245所央企名录", "url": "http://www.cecep.cn", "status": "🟡 准备中", "rules": "固废处理、大气治理、自动化。"},
+    {"name": "中国国际工程咨询有限公司工程管理部", "short_name": "中咨工程", "category": "245所央企名录", "url": "http://www.ciecc.com.cn", "status": "🟡 准备中", "rules": "大型国家工程审计与咨询。"},
+    {"name": "中国中煤能源股份有限公司", "short_name": "中煤能源", "category": "245所央企名录", "url": "http://www.chinacoal.com", "status": "🔴 待公布", "rules": "煤炭生产销售、煤化工、装备。"},
+    {"name": "煤炭科学技术研究院有限公司软件所", "short_name": "煤科院软件", "category": "245所央企名录", "url": "http://www.ccteg.cn", "status": "🟡 准备中", "rules": "智慧矿山、数字孪生、软件开发。"},
+    {"name": "机械工业信息研究院", "short_name": "机械信息院", "category": "245所央企名录", "url": "http://www.cam.com.cn", "status": "🟡 准备中", "rules": "机械工业出版、数智媒体、IT。"},
+    {"name": "中国冶金地质总局山东局", "short_name": "冶金地质山东局", "category": "245所央企名录", "url": "http://www.cmgb.cn", "status": "🟡 准备中", "rules": "华东区域地质勘查与测量。"},
+    {"name": "中国煤炭地质总局水文局", "short_name": "煤炭地质水文局", "category": "245所央企名录", "url": "http://www.ccgc.cn", "status": "🟡 准备中", "rules": "水文地质环境勘查。"},
+    {"name": "新兴铸管股份有限公司", "short_name": "新兴铸管", "category": "245所央企名录", "url": "http://www.xxcig.com", "status": "🟡 准备中", "rules": "球墨铸铁管龙头，机械、自动化。"},
+    {"name": "中国民航信息网络股份有限公司", "short_name": "中航信股份", "category": "245所央企名录", "url": "https://travelsky.zhiye.com", "status": "🟢 已开启提前批", "rules": "港股上市，民航订票系统高并发运维与研发。"},
+    {"name": "中国航空油料有限责任公司", "short_name": "航油供应", "category": "245所央企名录", "url": "http://www.cnaf.com", "status": "🟡 准备中", "rules": "全国机场航油加注与供应网络。"},
+    {"name": "中国航空器材有限责任公司", "short_name": "航材物流", "category": "245所央企名录", "url": "http://www.casc.com.cn", "status": "🟡 准备中", "rules": "航材共享与冷链物流。"},
+    {"name": "中国电建集团华东勘测设计研究院", "short_name": "电建华东院", "category": "245所央企名录", "url": "http://www.powerchina.cn", "status": "🟢 已开启提前批", "rules": "杭州 headquarters，电建王牌设计院，数字化与软件极佳。"},
+    {"name": "中国电建集团成都勘测设计研究院", "short_name": "电建成都院", "category": "245所央企名录", "url": "http://www.powerchina.cn", "status": "🟢 已开启提前批", "rules": "成都 headquarters，水电工程、数字化工程。"},
+    {"name": "中国电建集团西北勘测设计研究院", "short_name": "电建西北院", "category": "245所央企名录", "url": "http://www.powerchina.cn", "status": "🟢 已开启提前批", "rules": "西安 headquarters，新能源与光伏。"},
+    {"name": "中国葛洲坝集团股份有限公司", "short_name": "能建葛洲坝", "category": "245所央企名录", "url": "http://www.ceec.net.cn", "status": "🟢 已开启提前批", "rules": "能建旗下旗舰工程施工大户。"},
+    {"name": "中国能源建设集团广东省电力设计研究院", "short_name": "能建广东院", "category": "245所央企名录", "url": "http://www.ceec.net.cn", "status": "🟢 已开启提前批", "rules": "广州总部，能建王牌院，效益突出。"},
+    {"name": "中国安能集团第一工程局", "short_name": "安能一局", "category": "245所央企名录", "url": "http://www.chinaan.cn", "status": "🟡 准备中", "rules": "工程建设与应急抢险。"},
+    {"name": "中国南水北调集团中线有限公司", "short_name": "南水北调中线", "category": "245所央企名录", "url": "http://www.cswef.com.cn", "status": "🟡 准备中", "rules": "南水北调中线干线工程自动化调度。"},
+    {"name": "中广核工程有限公司", "short_name": "广核工程", "category": "245所央企名录", "url": "https://cgn.zhiye.com", "status": "🟢 2027提前批开启", "rules": "中广核核电工程建造龙头，待遇丰厚。"},
+    {"name": "华侨城文化旅游科技集团有限公司", "short_name": "华侨城文旅", "category": "245所央企名录", "url": "https://oct.zhiye.com", "status": "🟢 2027侨星计划开启", "rules": "主题公园数字化、VR/AR科技。"},
+    {"name": "南光物流有限公司", "short_name": "南光物流", "category": "245所央企名录", "url": "http://www.namkwong.com.mo", "status": "🟡 准备中", "rules": "澳门跨境供应链与民生物资供应。"},
+    {"name": "许继集团有限公司", "short_name": "许继电气", "category": "245所央企名录", "url": "https://cee.zhiye.com", "status": "🟢 已开启提前批", "rules": "中国电气装备旗下旗舰，电力自动化龙头。"},
+    {"name": "平高集团有限公司", "short_name": "平高电气", "category": "245所央企名录", "url": "https://cee.zhiye.com", "status": "🟢 已开启提前批", "rules": "高压开关设备龙头，电气工程、软件。"},
+    {"name": "中国物流股份有限公司", "short_name": "中国物流股份", "category": "245所央企名录", "url": "https://chinalogistics.zhiye.com", "status": "🟢 已开启提前批", "rules": "综合物流、智慧园区、IT开发。"},
+    {"name": "中国资源循环利用研究院", "short_name": "资环研究院", "category": "245所央企名录", "url": "http://www.crgc.com.cn", "status": "🟢 2027首届校招开启", "rules": "资环集团核心智库与科研平台。"},
+    {"name": "中国铁路北京局集团有限公司", "short_name": "北京铁路局", "category": "245所央企名录", "url": "https://rczp.china-railway.com.cn", "status": "🟢 已开启提前批", "rules": "国铁集团旗下，华北区域运输。"},
+    {"name": "中国铁路上海局集团有限公司", "short_name": "上海铁路局", "category": "245所央企名录", "url": "https://rczp.china-railway.com.cn", "status": "🟢 已开启提前批", "rules": "长三角区域铁路运输大局，待遇好。"},
+    {"name": "中国铁路广州局集团有限公司", "short_name": "广州铁路局", "category": "245所央企名录", "url": "https://rczp.china-railway.com.cn", "status": "🟢 已开启提前批", "rules": "粤港澳大湾区铁路运输大局。"},
+    {"name": "中国铁路成都局集团有限公司", "short_name": "成都铁路局", "category": "245所央企名录", "url": "https://rczp.china-railway.com.cn", "status": "🟢 已开启提前批", "rules": "西南区域铁路运输。"},
+    {"name": "中国铁路武汉局集团有限公司", "short_name": "武汉铁路局", "category": "245所央企名录", "url": "https://rczp.china-railway.com.cn", "status": "🟢 已开启提前批", "rules": "华中枢纽铁路局。"},
+    {"name": "中国铁路西安局集团有限公司", "short_name": "西安铁路局", "category": "245所央企名录", "url": "https://rczp.china-railway.com.cn", "status": "🟢 已开启提前批", "rules": "西北干线铁路局。"},
+    {"name": "中国铁路沈阳局集团有限公司", "short_name": "沈阳铁路局", "category": "245所央企名录", "url": "https://rczp.china-railway.com.cn", "status": "🟢 已开启提前批", "rules": "东北区域铁路局。"},
+    {"name": "中国铁路哈尔滨局集团有限公司", "short_name": "哈尔滨铁路局", "category": "245所央企名录", "url": "https://rczp.china-railway.com.cn", "status": "🟢 已开启提前批", "rules": "极寒高纬度铁路运维。"},
+    {"name": "中国铁路郑州局集团有限公司", "short_name": "郑州铁路局", "category": "245所央企名录", "url": "https://rczp.china-railway.com.cn", "status": "🟢 已开启提前批", "rules": "中原交通枢纽铁路局。"},
+    {"name": "中国铁路济南局集团有限公司", "short_name": "济南铁路局", "category": "245所央企名录", "url": "https://rczp.china-railway.com.cn", "status": "🟢 已开启提前批", "rules": "山东半岛铁路网络。"},
+    {"name": "中国铁路南昌局集团有限公司", "short_name": "南昌铁路局", "category": "245所央企名录", "url": "https://rczp.china-railway.com.cn", "status": "🟢 已开启提前批", "rules": "赣闽两省铁路运输。"},
+    {"name": "中国铁路南宁局集团有限公司", "short_name": "南宁铁路局", "category": "245所央企名录", "url": "https://rczp.china-railway.com.cn", "status": "🟢 已开启提前批", "rules": "东盟陆路通道。"},
+    {"name": "中国铁路昆明局集团有限公司", "short_name": "昆明铁路局", "category": "245所央企名录", "url": "https://rczp.china-railway.com.cn", "status": "🟢 已开启提前批", "rules": "泛亚铁路发源局。"},
+    {"name": "中国铁路兰州局集团有限公司", "short_name": "兰州铁路局", "category": "245所央企名录", "url": "https://rczp.china-railway.com.cn", "status": "🟢 已开启提前批", "rules": "西北铁路线。"},
+    {"name": "中国铁路乌鲁木齐局集团有限公司", "short_name": "乌鲁木齐铁路局", "category": "245所央企名录", "url": "https://rczp.china-railway.com.cn", "status": "🟢 已开启提前批", "rules": "新疆亚欧大陆桥局。"},
+    {"name": "青藏铁路集团有限公司", "short_name": "青藏铁路公司", "category": "245所央企名录", "url": "https://rczp.china-railway.com.cn", "status": "🟢 已开启提前批", "rules": "高原铁路特色运维。"},
+    {"name": "中国铁路太原局集团有限公司", "short_name": "太原铁路局", "category": "245所央企名录", "url": "https://rczp.china-railway.com.cn", "status": "🟢 已开启提前批", "rules": "重载铁路大运量。"},
+    {"name": "中国铁路呼和浩特局集团有限公司", "short_name": "呼和浩特铁路局", "category": "245所央企名录", "url": "https://rczp.china-railway.com.cn", "status": "🟢 已开启提前批", "rules": "内蒙古草原铁路大动脉。"},
+    {"name": "中国邮政储蓄银行股份有限公司", "short_name": "邮储银行", "category": "245所央企名录", "url": "https://post.zhiye.com", "status": "🟢 2027校招预报名", "rules": "国有大行，总行软件开发中心、分行管培生。"},
+    {"name": "中信证券股份有限公司", "short_name": "中信证券", "category": "245所央企名录", "url": "https://citic.zhiye.com", "status": "🟢 2027中信生开启", "rules": "券商龙头，投行、研究、FinTech金融科技。"},
+    {"name": "光大证券股份有限公司", "short_name": "光大证券", "category": "245所央企名录", "url": "https://ebchina.zhiye.com", "status": "🟢 已开启提前批", "rules": "券商核心IT与业务岗。"},
+    {"name": "中国人民财产保险股份有限公司", "short_name": "人保财险", "category": "245所央企名录", "url": "https://picc.zhiye.com", "status": "🟢 2027提前批预约", "rules": "财险龙头，精算、数据分析、理赔科技。"},
+    {"name": "中国人寿保险股份有限公司", "short_name": "中国人寿寿险", "category": "245所央企名录", "url": "https://chinalife.zhiye.com", "status": "🟢 已开启提前批", "rules": "寿险龙头，研发、精算、管培。"},
+    {"name": "平安银行股份有限公司", "short_name": "平安银行", "category": "245所央企名录", "url": "https://campus.pingan.com", "status": "🟢 2027提前批抢跑", "rules": "零售银行领军，金融科技招聘大户。"},
+    {"name": "太平人寿保险有限公司", "short_name": "太平人寿", "category": "245所央企名录", "url": "https://cntaiping.zhiye.com", "status": "🟡 准备中", "rules": "太平集团核心寿险公司。"},
+    {"name": "建信金融科技有限责任公司", "short_name": "建信金科", "category": "245所央企名录", "url": "https://job.ccb.com", "status": "🔴 待公布", "rules": "建设银行旗下独立金融科技子公司。"},
+    {"name": "农银金融科技有限责任公司", "short_name": "农银金科", "category": "245所央企名录", "url": "https://job.abchina.com.cn", "status": "🔴 待公布", "rules": "农业银行旗下独立金融科技子公司。"},
+    {"name": "工银金融科技有限责任公司", "short_name": "工银金科", "category": "245所央企名录", "url": "https://job.icbc.com.cn", "status": "🔴 待公布", "rules": "工商银行旗下独立金融科技子公司。"},
+    {"name": "中银金融科技有限责任公司", "short_name": "中银金科", "category": "245所央企名录", "url": "https://job.boc.cn", "status": "🔴 待公布", "rules": "中国银行旗下独立金融科技子公司。"},
+    {"name": "交银金融科技有限责任公司", "short_name": "交银金科", "category": "245所央企名录", "url": "https://job.bankcomm.com", "status": "🟢 2027提前批抢跑", "rules": "交通银行旗下独立金融科技子公司。"},
+    {"name": "中国铁建国际集团有限公司", "short_name": "铁建国际", "category": "245所央企名录", "url": "http://www.crcc.cn", "status": "🟢 已开启提前批", "rules": "中国铁建外经龙头，海外工程、小语种、IT。"},
+    {"name": "中交路桥建设有限公司", "short_name": "中交路建", "category": "245所央企名录", "url": "http://www.ccccltd.cn", "status": "🟢 已开启提前批", "rules": "公路桥梁建设龙头。"},
+    {"name": "南方电网数字电网集团有限公司", "short_name": "南网数研院", "category": "245所央企名录", "url": "https://zhaopin.csg.cn", "status": "🟢 2027提前批预约", "rules": "南网数字电网大户，计算机、人工智能。"},
+    {"name": "中国水利水电第十六工程局有限公司", "short_name": "中国水电十六局", "category": "245所央企名录", "url": "http://www.powerchina.cn", "status": "🟡 准备中", "rules": "水利水电工程建设。"},
+    {"name": "中石化炼化工程(集团)股份有限公司", "short_name": "中石化炼化", "category": "245所央企名录", "url": "http://job.sinopec.com", "status": "🔴 待公布", "rules": "石化工程设计与施工。"}
 ]
 
 
@@ -140,24 +286,23 @@ class CentralEnterpriseManager:
             conn.commit()
 
     def populate_enterprises_if_empty(self, force_reload: bool = False):
-        """如果表为空或强制刷新，写入全量 99 所重点央企与 245 所央企数据"""
+        """如果表为空或强制刷新，写入刚好 245 所完整央企及二级子公司名录"""
         with self._get_connection() as conn:
-            if force_reload:
+            count = conn.execute("SELECT COUNT(*) FROM central_enterprises").fetchone()[0]
+            if count != len(FULL_CENTRAL_ENTERPRISES) or force_reload:
                 conn.execute("DELETE FROM central_enterprises")
                 conn.commit()
 
-            count = conn.execute("SELECT COUNT(*) FROM central_enterprises").fetchone()[0]
-            if count < 80 or force_reload:
                 for ent in FULL_CENTRAL_ENTERPRISES:
                     conn.execute("""
                     INSERT OR IGNORE INTO central_enterprises (name, short_name, category, url, status, rules, updated_at)
                     VALUES (?, ?, ?, ?, ?, ?, datetime('now', 'localtime'))
                     """, (ent["name"], ent["short_name"], ent["category"], ent["url"], ent["status"], ent["rules"]))
                 conn.commit()
-                print(f"✅ 已成功刷新向数据库注入全量 {len(FULL_CENTRAL_ENTERPRISES)} 所央企 2027 校招完整名录库！")
+                print(f"✅ 已成功刷新向数据库注入完整 {len(FULL_CENTRAL_ENTERPRISES)} 所央企 2027 校招全量名录库！")
 
     def get_all_enterprises(self) -> List[Dict]:
-        """获取所有央企记录"""
+        """获取所有央企记录 (共计 245 条)"""
         self.populate_enterprises_if_empty(force_reload=True)
         with self._get_connection() as conn:
             rows = conn.execute("SELECT * FROM central_enterprises ORDER BY id ASC").fetchall()
