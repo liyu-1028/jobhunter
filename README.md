@@ -18,7 +18,7 @@
 - 🎯 **岗位多维智能匹配 (Tab 1)**：根据求职者的学历背景、毕业院校、专业、目标批次与意向城市，由 DeepSeek 大模型驱动进行精准岗位匹配与梯度推荐。
 - 🏛️ **245 所央国企校招直通车 & 2027 章程 (Tab 2)**：完整涵盖 245 家央国企名录（含总部地区与行业分类），一键 Fetch 最新招考开启进度与选拔要求。
 - 🎓 **全国 34 省市高校辅导员招聘直通车 (Tab 3)**：结合搜索引擎网页抓取与大模型（DeepSeek）常识推导，实时提取全国各大地级市（如安徽芜湖、浙江杭州等）最新高校辅导员招聘公告与直达链接。
-- 💻 **优雅交互可视化仪表盘**：包含极简响应式 Web 界面与全局 Null 安全防护机制。
+- 🔒 **个人 API Key 隐私安全保密**：网页端输入框支持自定义配置 DeepSeek API Key，密钥仅保存在用户本地浏览器 LocalStorage，绝不上交或泄露。
 - 📦 **Windows `.EXE` 单文件免安装部署**：集成 PyInstaller 自动化打包，支持 Windows 环境下双击直接唤起本地 Edge 或 Chrome 浏览器使用。
 
 ---
@@ -37,12 +37,14 @@ JobHunter/
 │   └── adapters/            # 适配器目录 (高校辅导员搜抓与 LLM 提取)
 ├── templates/
 │   └── report_template.html  # 优雅现代风单页仪表盘 HTML 模板
+├── docs/
+│   └── assets/              # 微信二维码与赞赏收款码资源图片目录
 ├── scripts/
 │   ├── manage.sh            # Linux/macOS 后台守护脚本 (start/stop/restart)
 │   ├── build_windows_exe.bat# Windows 一键编译 .EXE 批处理脚本
 │   └── build_exe.py         # 跨平台构建脚本
 └── .github/workflows/
-    └── build_exe.yml        # GitHub Actions 自动化 Windows EXE 云端构建工作流
+    └── build_exe.yml        # GitHub Actions 自动化 Windows EXE 云端构建与 Release 工作流
 ```
 
 ---
@@ -69,7 +71,7 @@ pip install -r requirements.txt
 ```bash
 cp .env.example .env
 ```
-在 `.env` 中填写您的 DeepSeek API Key（未配置时系统将自动降级为 Demo 智能 Mock 模式）。
+在 `.env` 中填写您的 DeepSeek API Key（也可直接在打开的网页端输入框配置，密钥仅加密保存在本地）。
 
 ### 3. 启动后台 API 服务与仪表盘
 
@@ -89,7 +91,7 @@ python -m src.server
 本项目支持打包为独立的单文件 `JobHunter.exe`，别人收到后**无需安装 Python 或任何环境，双击即可直接唤起 Edge/Chrome 浏览器使用**：
 
 1. **直接在 GitHub 下载编译好的 `.exe`**：
-   前往 [GitHub Actions Release 页面](https://github.com/liyu-1028/jobhunter/actions)，选择最新运行构建成功的 Workflow，在 Artifacts 中即可下载 `JobHunter.exe`。
+   前往 [GitHub Releases 页面](https://github.com/liyu-1028/jobhunter/releases) 直接点击下载 `JobHunter.exe`。
 2. **在 Windows 本地自行构建**：
    双击运行 `scripts/build_windows_exe.bat` 即可在 `dist/` 目录下生成 `JobHunter.exe`。
 
@@ -103,6 +105,21 @@ python -m src.server
 - `POST /api/fetch_enterprises`：实时获取并刷新全量 245 家央企校招状态。
 - `POST /api/fetch_counselors`：根据 `province` 和 `city` 参数抓取并经由 LLM 提取最新高校辅导员招聘公告。
 - `GET /api/history`：获取全量本地历史持久化数据。
+
+---
+
+## ❤️ 赞赏与支持 (Sponsor) & 💬 交流联系
+
+如果本项目帮助到了您的求职、招考或开发工作，欢迎点个 **⭐ Star** 或给作者喝一杯咖啡 ☕！
+
+<div align="center">
+
+| 💬 微信交流与问题反馈 | ❤️ 微信赞赏与支持 |
+| :---: | :---: |
+| <img src="docs/assets/wechat.png" width="220" alt="个人微信二维码" /> | <img src="docs/assets/sponsor_wechat.png" width="220" alt="微信赞赏收款码" /> |
+| 扫描二维码添加作者微信 | 扫描二维码给予作者赞赏支持 |
+
+</div>
 
 ---
 

@@ -1,59 +1,21 @@
 INFO:     Will watch for changes in these directories: ['/Users/liyanlong/code/MyIdea/jobhunter']
 INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
-INFO:     Started reloader process [78688] using StatReload
+INFO:     Started reloader process [93126] using StatReload
 🚀 正在启动 JobHunter 本地 HTTP API 服务器 (访问端口: 8000)...
-INFO:     Started server process [78691]
+INFO:     Started server process [93129]
 INFO:     Waiting for application startup.
 INFO:     Application startup complete.
-INFO:     127.0.0.1:63625 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60749 - "GET / HTTP/1.1" 200 OK
+
+⚠️ 调用 DeepSeek API 发生错误: 1 validation error for SearchResult
+total_found
+  Field required [type=missing, input_value={'search_time': '2026-07-...0k-50k·16薪范围。'}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.13/v/missing
+💡 自动切换为智能 Demo 数据生成模式...
 📦 已将本地全量数据导出至: /Users/liyanlong/code/MyIdea/jobhunter/output/data.json
-INFO:     127.0.0.1:63625 - "POST /api/fetch_counselors HTTP/1.1" 200 OK
-WARNING:  StatReload detected changes in 'src/renderer.py'. Reloading...
-INFO:     Shutting down
-INFO:     Waiting for application shutdown.
-INFO:     Application shutdown complete.
-INFO:     Finished server process [78691]
-INFO:     Started server process [81225]
-INFO:     Waiting for application startup.
-INFO:     Application startup complete.
-WARNING:  StatReload detected changes in 'src/server.py'. Reloading...
-INFO:     Shutting down
-INFO:     Waiting for application shutdown.
-INFO:     Application shutdown complete.
-INFO:     Finished server process [81225]
-INFO:     Started server process [81230]
-INFO:     Waiting for application startup.
-INFO:     Application startup complete.
-INFO:     127.0.0.1:52791 - "GET / HTTP/1.1" 200 OK
-INFO:     127.0.0.1:52837 - "GET / HTTP/1.1" 200 OK
-INFO:     127.0.0.1:52837 - "GET /favicon.ico HTTP/1.1" 404 Not Found
+✅ 已成功刷新向数据库注入包含总部与行业的完整 245 所央企名录库！
+
+✨ 本地可视化页面已展示最新数据: /Users/liyanlong/code/MyIdea/jobhunter/output/index.html
+INFO:     127.0.0.1:61076 - "POST /api/search_jobs HTTP/1.1" 200 OK
 📦 已将本地全量数据导出至: /Users/liyanlong/code/MyIdea/jobhunter/output/data.json
-INFO:     127.0.0.1:64350 - "POST /api/fetch_counselors HTTP/1.1" 200 OK
-📦 已将本地全量数据导出至: /Users/liyanlong/code/MyIdea/jobhunter/output/data.json
-INFO:     127.0.0.1:64372 - "POST /api/fetch_counselors HTTP/1.1" 200 OK
-📦 已将本地全量数据导出至: /Users/liyanlong/code/MyIdea/jobhunter/output/data.json
-INFO:     127.0.0.1:64392 - "POST /api/fetch_counselors HTTP/1.1" 200 OK
-WARNING:  StatReload detected changes in 'src/models.py'. Reloading...
-INFO:     Shutting down
-INFO:     Waiting for application shutdown.
-INFO:     Application shutdown complete.
-INFO:     Finished server process [81230]
-INFO:     Started server process [92470]
-INFO:     Waiting for application startup.
-INFO:     Application startup complete.
-WARNING:  StatReload detected changes in 'src/adapters/counselor_adapter.py'. Reloading...
-INFO:     Shutting down
-INFO:     Waiting for application shutdown.
-INFO:     Application shutdown complete.
-INFO:     Finished server process [92470]
-INFO:     Started server process [92481]
-INFO:     Waiting for application startup.
-INFO:     Application startup complete.
-WARNING:  StatReload detected changes in 'src/server.py'. Reloading...
-INFO:     Shutting down
-INFO:     Waiting for application shutdown.
-INFO:     Application shutdown complete.
-INFO:     Finished server process [92481]
-INFO:     Started server process [92511]
-INFO:     Waiting for application startup.
-INFO:     Application startup complete.
+INFO:     127.0.0.1:61175 - "POST /api/fetch_counselors HTTP/1.1" 200 OK
