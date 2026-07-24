@@ -1,4 +1,11 @@
 import os
+import sys
+
+# 将项目根目录添加到 Python 模块搜索路径 sys.path
+PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+if PROJECT_ROOT not in sys.path:
+    sys.path.insert(0, PROJECT_ROOT)
+
 from datetime import datetime
 from typing import Optional
 from fastapi import FastAPI, HTTPException
@@ -31,7 +38,6 @@ def index_page():
     """提供首页可视化仪表盘文件"""
     index_path = os.path.abspath("output/index.html")
     if not os.path.exists(index_path):
-        # 初始自动渲染生成 index.html
         profile = UserProfile()
         res = engine.search_all_sources(profile)
         renderer.render(res, history_jobs=db.get_all_jobs())
@@ -43,18 +49,14 @@ def api_search_jobs(profile: UserProfile):
     """【Tab 1】接收个人信息表单，实时并发抓取并匹配岗位"""
     batch_timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-    # 并发拉取岗位数据
     search_res = engine.search_all_sources(profile)
 
-    # 赋予批次时间戳
     for job in search_res.jobs:
         job.fetched_at = batch_timestamp
 
-    # 持久化落库与导出 data.json
     db.save_jobs(search_res.jobs, batch_timestamp=batch_timestamp)
     all_history = db.get_all_jobs()
 
-    # 同步刷新渲染 output/index.html
     renderer.render(search_res, history_jobs=all_history)
 
     return {
@@ -73,7 +75,6 @@ def api_fetch_enterprises():
 
     enterprises = ent_manager.get_all_enterprises()
 
-    # 更新数据库中的时间戳
     with db._get_connection() as conn:
         conn.execute("UPDATE central_enterprises SET updated_at = ?", (batch_timestamp,))
         conn.commit()

@@ -57,7 +57,7 @@ start_service() {
     fi
 
     echo -e "🚀 正在启动 JobHunter API 服务 (端口: $PORT)..."
-    nohup "$VENV_PYTHON" "$SERVER_SCRIPT" > "$LOG_FILE" 2>&1 &
+    PYTHONPATH="$PROJECT_DIR" nohup "$VENV_PYTHON" "$SERVER_SCRIPT" > "$LOG_FILE" 2>&1 &
     NEW_PID=$!
     
     # 写入 PID 文件
