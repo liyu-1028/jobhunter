@@ -5,3 +5,6 @@ INFO:     Started reloader process [78688] using StatReload
 INFO:     Started server process [78691]
 INFO:     Waiting for application startup.
 INFO:     Application startup complete.
+INFO:     127.0.0.1:63625 - "GET / HTTP/1.1" 200 OK
+📦 已将本地全量数据导出至: /Users/liyanlong/code/MyIdea/jobhunter/output/data.json
+INFO:     127.0.0.1:63625 - "POST /api/fetch_counselors HTTP/1.1" 200 OK
