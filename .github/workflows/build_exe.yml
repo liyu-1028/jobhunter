@@ -1,12 +1,16 @@
-name: Build Windows EXE Release
+name: Build Windows EXE & Auto Release
 
 on:
   push:
-    branches: [ main ]
-  workflow_dispatch:
+    tags:
+      - 'v*' # 当推送形如 v1.0.0, v1.0.1 的标签时自动发布到 Release
+  workflow_dispatch: # 支持手动网页一键触发
+
+permissions:
+  contents: write # 授予自动创建 Release 的权限
 
 jobs:
-  build-windows-exe:
+  build-and-release:
     runs-on: windows-latest
 
     steps:
@@ -33,3 +37,21 @@ jobs:
       with:
         name: JobHunter_Windows_Executable
         path: dist/JobHunter.exe
+
+    - name: 🚀 Publish to GitHub Release
+      uses: softprops/action-gh-release@v2
+      if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
+      with:
+        files: dist/JobHunter.exe
+        name: JobHunter Windows 客户端 Release ${{ github.ref_name }}
+        body: |
+          🎉 **JobHunter Windows 独立客户端 Release 自动发布**
+
+          ### 📦 使用说明：
+          1. 下载下方 `JobHunter.exe` 可执行文件；
+          2. 在 Windows 环境下双击运行即可；
+          3. 系统将后台自动启动服务并唤起本地 Edge 或 Chrome 浏览器直接使用！
+        draft: false
+        prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
