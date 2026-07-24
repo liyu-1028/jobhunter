@@ -1,4 +1,5 @@
 import os
+import sys
 import webbrowser
 from jinja2 import Environment, FileSystemLoader
 from src.models import SearchResult
@@ -8,13 +9,29 @@ from src.db import JobDatabase
 class HTMLReportRenderer:
     """HTML 单页多维交互可视化仪表盘渲染类"""
 
-    def __init__(self, template_dir: str = "templates"):
+    def __init__(self, template_dir: str = None):
+        if template_dir is None:
+            # 兼容 PyInstaller EXE 解压后的临时资源目录 sys._MEIPASS
+            if getattr(sys, 'frozen', False):
+                base_path = sys._MEIPASS
+            else:
+                base_path = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+            template_dir = os.path.join(base_path, "templates")
+
         self.template_dir = template_dir
-        self.env = Environment(loader=FileSystemLoader(template_dir))
+        self.env = Environment(loader=FileSystemLoader(self.template_dir))
         self.ent_manager = CentralEnterpriseManager()
         self.db = JobDatabase()
 
-    def render(self, result: SearchResult, history_jobs: list = None, output_file: str = "output/index.html", open_browser: bool = False) -> str:
+    def render(self, result: SearchResult, history_jobs: list = None, output_file: str = None, open_browser: bool = False) -> str:
+        if output_file is None:
+            if getattr(sys, 'frozen', False):
+                # 打包运行环境下将生成的 output/index.html 放在用户工作目录或系统临时输出目录
+                base_out = os.getcwd()
+            else:
+                base_out = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+            output_file = os.path.join(base_out, "output", "index.html")
+
         os.makedirs(os.path.dirname(output_file), exist_ok=True)
         template = self.env.get_template("report_template.html")
 

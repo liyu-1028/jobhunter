@@ -2,7 +2,11 @@ import os
 import sys
 
 # 动态将项目根目录加入 sys.path
-PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+if getattr(sys, 'frozen', False):
+    PROJECT_ROOT = sys._MEIPASS
+else:
+    PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+
 if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
 
@@ -57,12 +61,19 @@ class OptionalUserProfile(BaseModel):
 
 @app.get("/", response_class=HTMLResponse)
 def index_page():
-    """提供首页可视化仪表盘文件"""
-    index_path = os.path.abspath("output/index.html")
+    """提供首页可视化仪表盘文件 (兼容 EXE 解压与运行时生成)"""
+    if getattr(sys, 'frozen', False):
+        base_out = os.getcwd()
+    else:
+        base_out = PROJECT_ROOT
+
+    index_path = os.path.join(base_out, "output", "index.html")
+
     if not os.path.exists(index_path):
         profile = UserProfile()
         res = engine.search_all_sources(profile)
-        renderer.render(res, history_jobs=db.get_all_jobs())
+        renderer.render(res, history_jobs=db.get_all_jobs(), output_file=index_path)
+
     return FileResponse(index_path)
 
 

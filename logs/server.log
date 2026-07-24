@@ -8,3 +8,19 @@ INFO:     Application startup complete.
 INFO:     127.0.0.1:63625 - "GET / HTTP/1.1" 200 OK
 📦 已将本地全量数据导出至: /Users/liyanlong/code/MyIdea/jobhunter/output/data.json
 INFO:     127.0.0.1:63625 - "POST /api/fetch_counselors HTTP/1.1" 200 OK
+WARNING:  StatReload detected changes in 'src/renderer.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [78691]
+INFO:     Started server process [81225]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  StatReload detected changes in 'src/server.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [81225]
+INFO:     Started server process [81230]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
