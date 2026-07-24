@@ -1,8 +1,9 @@
 import os
 import webbrowser
-from typing import List, Optional
+from typing import List, Optional, Dict
 from jinja2 import Environment, FileSystemLoader
 from src.models import SearchResult, JobItem
+from src.company_loader import CentralEnterpriseManager
 
 
 class HTMLReportRenderer:
@@ -17,6 +18,7 @@ class HTMLReportRenderer:
         
         self.env = Environment(loader=FileSystemLoader(self.template_dir))
         self.template = self.env.get_template("report_template.html")
+        self.ent_manager = CentralEnterpriseManager()
 
     def render(self, result: SearchResult, history_jobs: Optional[List[JobItem]] = None, open_browser: bool = True) -> str:
         """渲染 HTML 报告并覆写统一的 output/index.html"""
@@ -26,12 +28,16 @@ class HTMLReportRenderer:
         # 提取历史数据库中所有不同的搜索批次 / 日期
         batches = sorted(list(set([j.batch for j in history if j.batch])), reverse=True)
 
+        # 获取全量央企名录与 2027 届校招章程数据
+        enterprises = self.ent_manager.get_all_enterprises()
+
         rendered_html = self.template.render(
             search_time=result.search_time,
             profile=result.profile,
             jobs=result.jobs,
             history_jobs=history,
             batches=batches,
+            enterprises=enterprises,
             summary=result.summary
         )
 
