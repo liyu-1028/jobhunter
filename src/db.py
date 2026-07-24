@@ -1,13 +1,13 @@
 import os
 import sqlite3
 import json
-from typing import List
+from typing import List, Dict
 from datetime import datetime
 from src.models import JobItem
 
 
 class JobDatabase:
-    """基于 SQLite 的本地历史岗位与投递状态持久化数据库"""
+    """基于 SQLite 的本地岗位与投递状态持久化数据库"""
 
     def __init__(self, db_path: str = "data/jobhunter.db"):
         self.db_path = db_path
@@ -44,11 +44,10 @@ class JobDatabase:
             conn.commit()
 
     def save_jobs(self, jobs: List[JobItem]):
-        """保存或更新岗位数据到 SQLite (按公司名+岗位名去重/更新)"""
+        """保存或更新岗位数据到 SQLite (按 ID / 指纹去重与更新)"""
         now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         with self._get_connection() as conn:
             for job in jobs:
-                # 序列化数组列表
                 reqs_json = json.dumps(job.requirements, ensure_ascii=False)
                 tags_json = json.dumps(job.tags, ensure_ascii=False)
 
@@ -98,8 +97,20 @@ class JobDatabase:
                 ))
             return jobs
 
-    def update_job_status(self, job_id: str, status: str):
-        """更新单个岗位的投递状态 (unapplied / applied)"""
-        with self._get_connection() as conn:
-            conn.execute("UPDATE jobs SET status = ? WHERE id = ?", (status, job_id))
-            conn.commit()
+    def export_to_json(self, output_json_path: str = "output/data.json", profile_dict: Dict = None, enterprises_list: List[Dict] = None):
+        """将本地 SQLite 中的数据导出为独立的 output/data.json 文件供本地 index 页面无缝载入"""
+        os.makedirs(os.path.dirname(output_json_path), exist_ok=True)
+        jobs = [j.model_dump() for j in self.get_all_jobs()]
+        
+        data_payload = {
+            "last_updated": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "profile": profile_dict or {},
+            "jobs_count": len(jobs),
+            "jobs": jobs,
+            "enterprises": enterprises_list or []
+        }
+
+        with open(output_json_path, "w", encoding="utf-8") as f:
+            json.dump(data_payload, f, ensure_ascii=False, indent=2)
+
+        print(f"📦 已将本地全量数据导出至: {output_json_path}")
