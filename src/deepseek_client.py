@@ -245,7 +245,6 @@ class DeepSeekJobHunter:
 
         return SearchResult(
             search_time=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            profile=profile,
-            jobs=mock_jobs,
-            summary=f"针对您的【{profile.school}·{profile.degree}】背景及在【{profile.target_industry}】领域的期望，目前{profile.batch}市场整体需求热度高。大厂与国企均对您的匹配度表现优秀。建议优先投递匹配度 90+ 的大厂核心岗位，同时搭配 1-2 家央企国企作为稳健选择。"
+            total_found=len(mock_jobs),
+            jobs=mock_jobs
         )

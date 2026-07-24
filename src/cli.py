@@ -1,168 +1,86 @@
 import os
-import yaml
-from pathlib import Path
-from dotenv import load_dotenv
+import questionary
+from datetime import datetime
 from rich.console import Console
 from rich.panel import Panel
-from rich.prompt import Prompt, Confirm
-from rich.table import Table
 
 from src.models import UserProfile
 from src.engine import create_default_engine
 from src.renderer import HTMLReportRenderer
 from src.db import JobDatabase
+from src.adapters.counselor_adapter import CounselorJobAdapter
 
 console = Console()
 
-
-def load_config_profile(config_path: str = "config/profile.yaml") -> UserProfile | None:
-    """尝试读取 YAML 配置文件"""
-    if os.path.exists(config_path):
-        try:
-            with open(config_path, "r", encoding="utf-8") as f:
-                data = yaml.safe_load(f)
-                if data and "user_profile" in data:
-                    return UserProfile(**data["user_profile"])
-        except Exception as e:
-            console.print(f"[yellow]⚠️ 读取配置文件失败 ({e})，将切换到交互输入模式。[/yellow]")
-    return None
-
-
-def save_config_profile(profile: UserProfile, config_path: str = "config/profile.yaml"):
-    """保存 UserProfile 到 YAML"""
-    os.makedirs(os.path.dirname(config_path), exist_ok=True)
-    with open(config_path, "w", encoding="utf-8") as f:
-        yaml.safe_dump({"user_profile": profile.model_dump()}, f, allow_unicode=True)
-    console.print(f"[green]✔ 已将当前求职 Profile 保存到配置文件: {config_path}[/green]")
-
-
-def collect_profile_interactively(default_profile: UserProfile | None = None) -> UserProfile:
-    """在终端中交互式收集用户个人求职信息"""
-    console.print("\n[bold cyan]📝 请输入您的个人求职信息与搜索偏好：[/bold cyan]\n")
-
-    degree = Prompt.ask(
-        "🎓 1. 学历", 
-        choices=["本科", "硕士", "博士", "大专"], 
-        default=default_profile.degree if default_profile else "硕士"
-    )
-
-    school = Prompt.ask(
-        "🏫 2. 毕业学校名称", 
-        default=default_profile.school if default_profile else "浙江大学"
-    )
-
-    major = Prompt.ask(
-        "📚 3. 专业名称", 
-        default=default_profile.major if default_profile else "计算机科学与技术"
-    )
-
-    batch = Prompt.ask(
-        "📅 4. 招聘批次", 
-        default=default_profile.batch if default_profile else "2026届秋招"
-    )
-
-    target_industry = Prompt.ask(
-        "🏢 5. 目标行业/领域", 
-        default=default_profile.target_industry if default_profile else "互联网/人工智能/软件"
-    )
-
-    company_type = Prompt.ask(
-        "🏛️ 6. 期望公司性质", 
-        default=default_profile.company_type if default_profile else "大厂/国企/外企"
-    )
-
-    company_size = Prompt.ask(
-        "👥 7. 期望公司规模人数", 
-        default=default_profile.company_size if default_profile else "1000人以上"
-    )
-
-    location = Prompt.ask(
-        "📍 8. 期望工作城市", 
-        default=default_profile.location if default_profile else "杭州/上海"
-    )
-
-    keywords = Prompt.ask(
-        "🔍 9. 搜索岗位关键词 (用逗号或空格分隔)", 
-        default=default_profile.keywords if default_profile else "Python后端工程师, 算法工程师, 大模型开发"
-    )
-
-    profile = UserProfile(
-        degree=degree,
-        school=school,
-        major=major,
-        batch=batch,
-        target_industry=target_industry,
-        company_type=company_type,
-        company_size=company_size,
-        location=location,
-        keywords=keywords
-    )
-
-    if Confirm.ask("\n💾 是否将上述求职 Profile 保存到本地配置文件以备下次快速运行？"):
-        save_config_profile(profile)
-
-    return profile
-
-
 def run_cli():
-    """CLI 主流程入口"""
-    load_dotenv()
-    
-    console.print(Panel.fit(
-        "[bold magenta]🚀 JobHunter - 多数据源智能岗位搜索与可视化投递助手[/bold magenta]\n"
-        "[dim]集成 DeepSeek AI + 牛客网 + 海投网多数据源聚合 | MD5 无感去重 | SQLite 持久化[/dim]",
-        border_style="cyan"
-    ))
+    console.print(Panel.fit("[bold blue]JobHunter 多源岗位匹配、央国企及高校辅导员抓取系统[/bold blue]", subtitle="DeepSeek AI & 统一时间戳数据库"))
 
-    # 1. 尝试读取预存的 Profile
-    existing_profile = load_config_profile()
-    profile = None
+    action = questionary.select(
+        "请选择操作模式:",
+        choices=[
+            "1. 🚀 智能多数据源岗位搜索 (多维匹配)",
+            "2. 🎓 抓取全国/特定省市高校辅导员岗位数据",
+            "3. 📊 重新导出并生成可视化仪表盘 (output/index.html)",
+            "4. ❌ 退出"
+        ]
+    ).ask()
 
-    if existing_profile:
-        table = Table(title="📋 已加载保存的求职 Profile", border_style="dim")
-        table.add_column("配置项", style="cyan")
-        table.add_column("设定值", style="white")
+    if action.startswith("4"):
+        return
 
-        table.add_row("学历 & 学校", f"{existing_profile.degree} · {existing_profile.school}")
-        table.add_row("专业", existing_profile.major)
-        table.add_row("招聘批次", existing_profile.batch)
-        table.add_row("目标行业 & 期望性质", f"{existing_profile.target_industry} ({existing_profile.company_type})")
-        table.add_row("公司规模 & 城市", f"{existing_profile.company_size} @ {existing_profile.location}")
-        table.add_row("岗位关键词", existing_profile.keywords)
+    db = JobDatabase()
+    renderer = HTMLReportRenderer()
+    # 建立本轮发起的统一时间戳 (同一批数据时间戳相同)
+    batch_timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-        console.print(table)
-
-        use_existing = Confirm.ask("是否直接使用以上求职 Profile 开始搜索？", default=True)
-        if use_existing:
-            profile = existing_profile
-
-    if not profile:
-        profile = collect_profile_interactively(default_profile=existing_profile)
-
-    # 2. 检查 DeepSeek API Key
-    api_key = os.getenv("DEEPSEEK_API_KEY")
-    if not api_key:
-        console.print("\n[bold yellow]⚠️ 未检测到环境变量 DEEPSEEK_API_KEY。[/bold yellow]")
-        user_input_key = Prompt.ask("🔑 请输入您的 DeepSeek API Key (回车则跳过并使用 Demo 体验模式)", default="")
-        if user_input_key.strip():
-            api_key = user_input_key.strip()
-            os.environ["DEEPSEEK_API_KEY"] = api_key
-
-    # 3. 启动多数据源引擎并发检索
-    engine = create_default_engine(api_key=api_key)
-
-    with console.status("[bold green]🤖 多数据源引擎 (DeepSeek + 牛客网 + 海投网) 正在并发检索并去重，请稍候...", spinner="dots"):
+    if action.startswith("1"):
+        profile = UserProfile(
+            degree="硕士", school="浙江大学", major="计算机",
+            batch="2026届秋招", target_industry="互联网",
+            company_type="大厂/国企", company_size="1000人以上",
+            location="杭州", keywords="Python, 大模型"
+        )
+        engine = create_default_engine()
         result = engine.search_all_sources(profile)
 
-    # 4. 持久化数据落库 SQLite
-    db = JobDatabase()
-    db.save_jobs(result.jobs)
-    all_history_jobs = db.get_all_jobs()
+        # 给该批次所有岗位赋予统一时间戳
+        for job in result.jobs:
+            job.fetched_at = batch_timestamp
 
-    console.print(f"\n[bold green]✅ 多源并发检索完成！聚合去重后共得出 {len(result.jobs)} 个精选岗位！(历史数据库累计共 {len(all_history_jobs)} 个岗位)[/bold green]")
+        db.save_jobs(result.jobs, batch_timestamp=batch_timestamp)
 
-    # 5. 渲染可视化 HTML 报告（写入统一 output/index.html）
-    renderer = HTMLReportRenderer()
-    report_file = renderer.render(result, history_jobs=all_history_jobs, open_browser=True)
+        # 同时也抓取匹配城市的高校辅导员数据打上统一时间戳
+        counselor_adapter = CounselorJobAdapter()
+        counselor_jobs = counselor_adapter.fetch_counselor_jobs(province="浙江", city="杭州", batch_timestamp=batch_timestamp)
+        db.save_counselor_jobs(counselor_jobs, batch_timestamp=batch_timestamp)
 
-    console.print("\n[bold cyan]🎉 任务完成！赶快去浏览器查看您的多维筛选投递仪表盘 (output/index.html) 吧！[/bold cyan]")
+        all_history = db.get_all_jobs()
+        report_file = renderer.render(result, history_jobs=all_history, open_browser=True)
+
+    elif action.startswith("2"):
+        prov = questionary.text("请输入查询省份 (例如: 浙江, 江苏, 北京, 广东, 四川, 或 all):", default="浙江").ask()
+        city = questionary.text("请输入查询城市 (例如: 杭州, 南京, 北京, 广州, 深圳, 成都, 或 all):", default="杭州").ask()
+
+        console.print(f"🔎 正在抓取 [bold cyan]{prov} · {city}[/bold cyan] 高校辅导员招聘岗位信息...")
+        counselor_adapter = CounselorJobAdapter()
+        counselor_jobs = counselor_adapter.fetch_counselor_jobs(province=prov, city=city, batch_timestamp=batch_timestamp)
+        
+        saved_count = db.save_counselor_jobs(counselor_jobs, batch_timestamp=batch_timestamp)
+        console.print(f"✅ 成功抓取并落库 [bold green]{saved_count}[/bold green] 条高校辅导员招聘岗位数据 (时间戳: {batch_timestamp})！")
+
+        # 渲染更新 html
+        engine = create_default_engine()
+        profile = UserProfile()
+        result = engine.search_all_sources(profile)
+        all_history = db.get_all_jobs()
+        renderer.render(result, history_jobs=all_history, open_browser=True)
+
+    elif action.startswith("3"):
+        engine = create_default_engine()
+        profile = UserProfile()
+        result = engine.search_all_sources(profile)
+        all_history = db.get_all_jobs()
+        renderer.render(result, history_jobs=all_history, open_browser=True)
+
+if __name__ == "__main__":
+    run_cli()

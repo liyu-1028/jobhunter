@@ -55,9 +55,8 @@ class MultiSourceJobEngine:
 
         return SearchResult(
             search_time=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            profile=profile,
-            jobs=unique_jobs,
-            summary=f"已成功为您并发聚合 DeepSeek AI、牛客网、海投网等多渠道招聘数据，剔除重复项后共精选出 {len(unique_jobs)} 个优质匹配岗位。"
+            total_found=len(unique_jobs),
+            jobs=unique_jobs
         )
 
 
