@@ -29,18 +29,19 @@ class JobItem(BaseModel):
     source: str = "deepseek"
     fetched_at: str = ""  # 查询批次时间戳
 
-class CounselorJobItem(BaseModel):
+class UniversityCounselorAnnouncement(BaseModel):
     id: str
-    university: str
-    province: str
-    city: str
-    title: str = "专职辅导员"
-    establishment_type: str = "事业编制"  # 事业编制 / 员额制 / 合同制
-    salary: str = "10-15万/年"
-    requirements: List[str] = []
-    apply_url: str = "#"
-    status: str = "🟢 招聘中"
-    fetched_at: str = ""  # 批次时间戳
+    university: str                   # 高校名称
+    university_level: str = "双一流"    # 985/211/双一流/省属重点
+    province: str                     # 省份
+    city: str                         # 城市
+    has_announcement: bool = True     # 是否发布公告
+    announcement_status: str = "🟢 已发布招聘公告" # 状态描述
+    announcement_title: str           # 公告标题
+    publish_date: str = ""            # 发布时间
+    announcement_url: str = "#"       # 公告/人事处链接
+    requirements_summary: str = ""    # 选拔章程/要求简述
+    fetched_at: str = ""              # 查询批次时间戳
 
 class SearchResult(BaseModel):
     search_time: str

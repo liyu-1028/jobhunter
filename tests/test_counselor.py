@@ -2,29 +2,31 @@ import pytest
 from src.adapters.counselor_adapter import CounselorJobAdapter
 from src.db import JobDatabase
 
-def test_counselor_adapter():
+def test_counselor_announcements_adapter():
     adapter = CounselorJobAdapter()
-    timestamp = "2026-07-24 13:15:00"
-    jobs = adapter.fetch_counselor_jobs(province="浙江", city="杭州", batch_timestamp=timestamp)
+    timestamp = "2026-07-24 13:20:00"
+    anns = adapter.fetch_university_counselor_announcements(province="浙江", city="杭州", batch_timestamp=timestamp)
     
-    assert len(jobs) > 0
-    for j in jobs:
-        assert j.province == "浙江"
-        assert j.city == "杭州"
-        assert j.fetched_at == timestamp
+    assert len(anns) > 0
+    for a in anns:
+        assert a.province == "浙江"
+        assert a.city == "杭州"
+        assert a.fetched_at == timestamp
+        assert a.announcement_url.startswith("http")
 
-def test_counselor_db_saving(tmp_path):
+def test_counselor_announcements_db_saving(tmp_path):
     db_file = str(tmp_path / "test_jobhunter.db")
     db = JobDatabase(db_path=db_file)
     
     adapter = CounselorJobAdapter()
-    timestamp = "2026-07-24 13:15:00"
-    jobs = adapter.fetch_counselor_jobs(province="浙江", city="杭州", batch_timestamp=timestamp)
+    timestamp = "2026-07-24 13:20:00"
+    anns = adapter.fetch_university_counselor_announcements(province="浙江", city="杭州", batch_timestamp=timestamp)
     
-    saved_count = db.save_counselor_jobs(jobs, batch_timestamp=timestamp)
-    assert saved_count == len(jobs)
+    saved_count = db.save_counselor_announcements(anns, batch_timestamp=timestamp)
+    assert saved_count == len(anns)
     
-    db_counselors = db.get_all_counselor_jobs()
-    assert len(db_counselors) == saved_count
-    for c in db_counselors:
-        assert c["fetched_at"] == timestamp
+    db_anns = db.get_all_counselor_announcements()
+    assert len(db_anns) == saved_count
+    for a in db_anns:
+        assert a["fetched_at"] == timestamp
+        assert "announcement_title" in a

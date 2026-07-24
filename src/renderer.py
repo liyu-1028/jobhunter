@@ -21,11 +21,11 @@ class HTMLReportRenderer:
         if history_jobs is None:
             history_jobs = [j.dict() for j in result.jobs]
 
-        # 获取全量央企名录与全量高校辅导员数据
+        # 获取全量央企名录与高校辅导员招聘公告
         enterprises = self.ent_manager.get_all_enterprises()
-        counselors = self.db.get_all_counselor_jobs()
+        counselor_anns = self.db.get_all_counselor_announcements()
 
-        # 收集所有的批次及时间戳
+        # 收集批次与时间戳
         batches = list(set([j.get('batch', '') for j in history_jobs if j.get('batch')]))
         timestamps = list(set([j.get('fetched_at', '') for j in history_jobs if j.get('fetched_at')]))
 
@@ -36,7 +36,7 @@ class HTMLReportRenderer:
             jobs=result.jobs,
             history_jobs=history_jobs,
             enterprises=enterprises,
-            counselors=counselors,
+            counselor_announcements=counselor_anns,
             batches=batches,
             timestamps=timestamps
         )

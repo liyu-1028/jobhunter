@@ -3,10 +3,10 @@ import json
 import os
 from typing import List, Dict, Optional
 from datetime import datetime
-from src.models import JobItem, CounselorJobItem
+from src.models import JobItem, UniversityCounselorAnnouncement
 
 class JobDatabase:
-    """本地 SQLite 岗位、央企与高校辅导员持久化数据库类"""
+    """本地 SQLite 岗位、央企与高校辅导员招聘公告持久化数据库类"""
 
     def __init__(self, db_path: str = "data/jobhunter.db"):
         self.db_path = db_path
@@ -20,13 +20,12 @@ class JobDatabase:
 
     def _init_db(self):
         with self._get_connection() as conn:
-            # 自动迁移检查旧 jobs 表
             try:
                 conn.execute("SELECT requirements_json FROM jobs LIMIT 1")
             except sqlite3.OperationalError:
                 conn.execute("DROP TABLE IF EXISTS jobs")
 
-            # 岗位表 (带 fetched_at 批次时间戳)
+            # 岗位表
             conn.execute("""
             CREATE TABLE IF NOT EXISTS jobs (
                 id TEXT PRIMARY KEY,
@@ -48,19 +47,20 @@ class JobDatabase:
             )
             """)
 
-            # 高校辅导员岗位表 (带 fetched_at 批次时间戳)
+            # 高校辅导员招聘公告表 (带批次时间戳)
             conn.execute("""
-            CREATE TABLE IF NOT EXISTS counselor_jobs (
+            CREATE TABLE IF NOT EXISTS university_counselor_announcements (
                 id TEXT PRIMARY KEY,
                 university TEXT NOT NULL,
+                university_level TEXT,
                 province TEXT NOT NULL,
                 city TEXT NOT NULL,
-                title TEXT NOT NULL,
-                establishment_type TEXT,
-                salary TEXT,
-                requirements_json TEXT,
-                apply_url TEXT,
-                status TEXT,
+                has_announcement INTEGER,
+                announcement_status TEXT,
+                announcement_title TEXT,
+                publish_date TEXT,
+                announcement_url TEXT,
+                requirements_summary TEXT,
                 fetched_at TEXT,
                 created_at TEXT
             )
@@ -68,7 +68,6 @@ class JobDatabase:
             conn.commit()
 
     def save_jobs(self, jobs: List[JobItem], batch_timestamp: str = None) -> int:
-        """保存或更新岗位记录，打上批次时间戳"""
         if not batch_timestamp:
             batch_timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
@@ -101,37 +100,38 @@ class JobDatabase:
         self.export_to_json()
         return inserted_count
 
-    def save_counselor_jobs(self, jobs: List[CounselorJobItem], batch_timestamp: str = None) -> int:
-        """保存高校辅导员岗位记录，打上同一批次时间戳"""
+    def save_counselor_announcements(self, anns: List[UniversityCounselorAnnouncement], batch_timestamp: str = None) -> int:
+        """保存高校辅导员招聘公告记录，打上统一批次时间戳"""
         if not batch_timestamp:
             batch_timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
         with self._get_connection() as conn:
-            for job in jobs:
-                req_json = json.dumps(job.requirements, ensure_ascii=False)
-                fetched_at = job.fetched_at or batch_timestamp
+            for ann in anns:
+                fetched_at = ann.fetched_at or batch_timestamp
 
                 conn.execute("""
-                INSERT INTO counselor_jobs (
-                    id, university, province, city, title, establishment_type, salary,
-                    requirements_json, apply_url, status, fetched_at, created_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now', 'localtime'))
+                INSERT INTO university_counselor_announcements (
+                    id, university, university_level, province, city, has_announcement,
+                    announcement_status, announcement_title, publish_date, announcement_url,
+                    requirements_summary, fetched_at, created_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now', 'localtime'))
                 ON CONFLICT(id) DO UPDATE SET
-                    status=excluded.status,
-                    salary=excluded.salary,
+                    announcement_status=excluded.announcement_status,
+                    announcement_title=excluded.announcement_title,
+                    publish_date=excluded.publish_date,
+                    announcement_url=excluded.announcement_url,
                     fetched_at=excluded.fetched_at
                 """, (
-                    job.id, job.university, job.province, job.city, job.title,
-                    job.establishment_type, job.salary, req_json, job.apply_url,
-                    job.status, fetched_at
+                    ann.id, ann.university, ann.university_level, ann.province, ann.city,
+                    1 if ann.has_announcement else 0, ann.announcement_status, ann.announcement_title,
+                    ann.publish_date, ann.announcement_url, ann.requirements_summary, fetched_at
                 ))
             conn.commit()
 
         self.export_to_json()
-        return len(jobs)
+        return len(anns)
 
     def get_all_jobs(self) -> List[Dict]:
-        """获取所有岗位记录"""
         with self._get_connection() as conn:
             rows = conn.execute("SELECT * FROM jobs ORDER BY fetched_at DESC, match_score DESC").fetchall()
             result = []
@@ -142,24 +142,17 @@ class JobDatabase:
                 result.append(item)
             return result
 
-    def get_all_counselor_jobs(self) -> List[Dict]:
-        """获取所有高校辅导员岗位记录"""
+    def get_all_counselor_announcements(self) -> List[Dict]:
+        """获取所有高校辅导员招聘公告记录"""
         with self._get_connection() as conn:
-            rows = conn.execute("SELECT * FROM counselor_jobs ORDER BY fetched_at DESC, id ASC").fetchall()
-            result = []
-            for row in rows:
-                item = dict(row)
-                item['requirements'] = json.loads(item['requirements_json']) if item['requirements_json'] else []
-                result.append(item)
-            return result
+            rows = conn.execute("SELECT * FROM university_counselor_announcements ORDER BY fetched_at DESC, id ASC").fetchall()
+            return [dict(row) for row in rows]
 
     def export_to_json(self, output_path: str = "output/data.json"):
-        """将全量数据导出为单文件 JSON 供本地索引与交互"""
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
         jobs = self.get_all_jobs()
-        counselors = self.get_all_counselor_jobs()
+        counselor_anns = self.get_all_counselor_announcements()
 
-        # 读取央企名录
         ent_rows = []
         with self._get_connection() as conn:
             try:
@@ -171,10 +164,10 @@ class JobDatabase:
             "exported_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             "total_jobs": len(jobs),
             "total_enterprises": len(ent_rows),
-            "total_counselors": len(counselors),
+            "total_counselor_announcements": len(counselor_anns),
             "jobs": jobs,
             "enterprises": ent_rows,
-            "counselor_jobs": counselors
+            "counselor_announcements": counselor_anns
         }
 
         with open(output_path, "w", encoding="utf-8") as f:
