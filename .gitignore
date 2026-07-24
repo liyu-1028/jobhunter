@@ -13,8 +13,9 @@ dist/
 data/*.db
 data/*.pid
 
-# Generated output artifacts
-output/
+# Generated output artifacts (except .gitkeep)
+output/*
+!output/.gitkeep
 
 # macOS / System hidden files
 .DS_Store

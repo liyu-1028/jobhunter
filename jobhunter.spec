@@ -5,6 +5,10 @@ import sys
 
 block_cipher = None
 
+# 确保打包前 templates 和 output 目录存在，避免 CI 环境报错
+os.makedirs('templates', exist_ok=True)
+os.makedirs('output', exist_ok=True)
+
 # 打包静态文件
 added_files = [
     ('templates', 'templates'),
