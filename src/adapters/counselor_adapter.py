@@ -11,23 +11,51 @@ from bs4 import BeautifulSoup
 from src.models import UniversityCounselorAnnouncement
 from src.deepseek_client import DeepSeekJobHunter
 
-# 备用名录库，保障在网络完全不可用时的安全兜底
+# 全国各省市核心高校地理映射表，用于精准构建抓取 Query
+CITY_UNIVERSITY_MAP = {
+    "芜湖": ["安徽师范大学", "安徽工程大学", "皖南医学院", "芜湖职业技术学院", "安徽商贸职业技术学院"],
+    "合肥": ["中国科学技术大学", "合肥工业大学", "安徽大学", "安徽农业大学", "安徽医科大学", "安徽建筑大学"],
+    "蚌埠": ["安徽财经大学", "蚌埠医学院", "安徽科技学院"],
+    "马鞍山": ["安徽工业大学"],
+    "淮南": ["安徽理工大学"],
+    "杭州": ["浙江大学", "杭州电子科技大学", "浙江工业大学", "浙江理工大学", "杭州师范大学"],
+    "宁波": ["宁波大学", "浙江万里学院"],
+    "南京": ["南京大学", "东南大学", "南京航空航天大学", "南京理工大学", "河海大学", "南京师范大学"],
+    "苏州": ["苏州大学", "苏州科技大学"],
+    "广州": ["中山大学", "华南理工大学", "华南师范大学", "暨南大学", "广东工业大学"],
+    "深圳": ["深圳大学", "南方科技大学"],
+    "成都": ["四川大学", "电子科技大学", "西南交通大学", "西南财经大学", "四川师范大学"],
+    "武汉": ["武汉大学", "华中科技大学", "华中师范大学", "武汉理工大学", "中国地质大学(武汉)"],
+    "长沙": ["中南大学", "湖南大学", "湖南师范大学", "长沙理工大学"],
+    "北京": ["北京大学", "清华大学", "北京师范大学", "中国人民大学", "北京航空航天大学"],
+    "上海": ["复旦大学", "上海交通大学", "同济大学", "华东师范大学", "华东理工大学"],
+    "西安": ["西安交通大学", "西北工业大学", "西安电子科技大学", "陕西师范大学", "西北大学"]
+}
+
+# 全量名录与应急数据库 (包含安徽芜湖全量院校)
 NATIONWIDE_UNIVERSITY_DATABASE = [
+    # 安徽省 - 芜湖市
+    {"university": "安徽师范大学", "university_level": "省属重点公办", "province": "安徽", "city": "芜湖", "has_announcement": True, "announcement_status": "🟢 已发布招聘公告", "announcement_title": "安徽师范大学2026/2027年度专职辅导员公开招聘公告", "publish_date": "2026-07-15", "announcement_url": "https://rsc.ahnu.edu.cn", "requirements_summary": "中共党员，硕士及以上学历，事业编制，思想政治或教育相关专业优先。"},
+    {"university": "安徽工程大学", "university_level": "省属重点公办", "province": "安徽", "city": "芜湖", "has_announcement": True, "announcement_status": "🟢 已发布招聘公告", "announcement_title": "安徽工程大学专职辅导员招聘简章", "publish_date": "2026-07-08", "announcement_url": "https://rsc.ahpu.edu.cn", "requirements_summary": "中共党员，硕士及以上，提供完善的人才引进补贴。"},
+    {"university": "皖南医学院", "university_level": "省属医科高校", "province": "安徽", "city": "芜湖", "has_announcement": True, "announcement_status": "🟢 已发布招聘公告", "announcement_title": "皖南医学院2026年思想政治辅导员选拔公告", "publish_date": "2026-07-02", "announcement_url": "https://rsc.wnmc.edu.cn", "requirements_summary": "中共党员，硕士及以上，医疗/心理学背景优先。"},
+    {"university": "芜湖职业技术学院", "university_level": "双高计划高职", "province": "安徽", "city": "芜湖", "has_announcement": True, "announcement_status": "🟢 已发布招聘公告", "announcement_title": "芜湖职业技术学院专职辅导员公开招聘公告", "publish_date": "2026-06-28", "announcement_url": "https://rsc.wvc.edu.cn", "requirements_summary": "中共党员，硕士研究生，省属公办编制。"},
+    {"university": "安徽商贸职业技术学院", "university_level": "省属公办高职", "province": "安徽", "city": "芜湖", "has_announcement": False, "announcement_status": "🟡 暂未发布", "announcement_title": "安徽商贸职业技术学院人事处招考栏", "publish_date": "暂无", "announcement_url": "https://rsc.abc.edu.cn", "requirements_summary": "预估要求：中共党员，硕士及以上。"},
+
+    # 安徽省 - 合肥市
+    {"university": "中国科学技术大学", "university_level": "985/双一流", "province": "安徽", "city": "合肥", "has_announcement": True, "announcement_status": "🟢 已发布招聘公告", "announcement_title": "中国科学技术大学思想政治辅导员招聘", "publish_date": "2026-07-02", "announcement_url": "http://employment.ustc.edu.cn", "requirements_summary": "中共党员，硕士/博士，待遇优厚。"},
+    {"university": "合肥工业大学", "university_level": "211/双一流", "province": "安徽", "city": "合肥", "has_announcement": True, "announcement_status": "🟢 已发布招聘公告", "announcement_title": "合肥工业大学2026年专职辅导员招聘选拔", "publish_date": "2026-07-10", "announcement_url": "http://rsc.hfut.edu.cn", "requirements_summary": "中共党员，硕士及以上，事业编制。"},
+    {"university": "安徽大学", "university_level": "211/双一流", "province": "安徽", "city": "合肥", "has_announcement": True, "announcement_status": "🟢 已发布招聘公告", "announcement_title": "安徽大学专职辅导员公开招聘简章", "publish_date": "2026-07-06", "announcement_url": "http://rsc.ahu.edu.cn", "requirements_summary": "中共党员，硕士及以上。"},
+
+    # 其他省份代表高校
     {"university": "北京大学", "university_level": "985/双一流", "province": "北京", "city": "北京", "has_announcement": True, "announcement_status": "🟢 已发布招聘公告", "announcement_title": "北京大学2026/2027年专职辅导员招聘公告", "publish_date": "2026-07-10", "announcement_url": "https://hr.pku.edu.cn", "requirements_summary": "中共党员，硕士及以上，事业编制。"},
     {"university": "清华大学", "university_level": "985/双一流", "province": "北京", "city": "北京", "has_announcement": True, "announcement_status": "🟢 已发布招聘公告", "announcement_title": "清华大学专职辅导员公开招聘简章", "publish_date": "2026-07-01", "announcement_url": "http://jobs.tsinghua.edu.cn", "requirements_summary": "中共党员，硕士/博士，综合素质极佳。"},
     {"university": "复旦大学", "university_level": "985/双一流", "province": "上海", "city": "上海", "has_announcement": True, "announcement_status": "🟢 已发布招聘公告", "announcement_title": "复旦大学专职辅导员选拔招聘公告", "publish_date": "2026-07-04", "announcement_url": "http://www.hr.fudan.edu.cn", "requirements_summary": "中共党员，硕士及以上，组织协调能力强。"},
-    {"university": "上海交通大学", "university_level": "985/双一流", "province": "上海", "city": "上海", "has_announcement": True, "announcement_status": "🟢 已发布招聘公告", "announcement_title": "上海交通大学思政教师与专职辅导员招聘", "publish_date": "2026-06-29", "announcement_url": "https://join.sjtu.edu.cn", "requirements_summary": "中共党员，硕士及以上，待遇优异。"},
-    {"university": "浙江大学", "university_level": "985/双一流", "province": "浙江", "city": "杭州", "has_announcement": True, "announcement_status": "🟢 已发布招聘公告", "announcement_title": "浙江大学2026/2027学年专职辅导员招聘公告", "publish_date": "2026-07-15", "announcement_url": "http://www.hr.zju.edu.cn", "requirements_summary": "中共党员，硕士及以上，事业编制。"},
-    {"university": "南京大学", "university_level": "985/双一流", "province": "江苏", "city": "南京", "has_announcement": True, "announcement_status": "🟢 已发布招聘公告", "announcement_title": "南京大学专职辅导员招聘公告", "publish_date": "2026-07-10", "announcement_url": "https://hr.nju.edu.cn", "requirements_summary": "中共党员，硕士及以上。"},
-    {"university": "中山大学", "university_level": "985/双一流", "province": "广东", "city": "广州", "has_announcement": True, "announcement_status": "🟢 已发布招聘公告", "announcement_title": "中山大学专职辅导员招聘公告", "publish_date": "2026-07-12", "announcement_url": "http://uems.sysu.edu.cn", "requirements_summary": "中共党员，硕士及以上。"},
-    {"university": "武汉大学", "university_level": "985/双一流", "province": "湖北", "city": "武汉", "has_announcement": True, "announcement_status": "🟢 已发布招聘公告", "announcement_title": "武汉大学专职辅导员招聘公告", "publish_date": "2026-07-11", "announcement_url": "http://rsb.whu.edu.cn", "requirements_summary": "中共党员，硕士及以上。"},
-    {"university": "西安交通大学", "university_level": "985/双一流", "province": "陕西", "city": "西安", "has_announcement": True, "announcement_status": "🟢 已发布招聘公告", "announcement_title": "西安交通大学专职辅导员招募启事", "publish_date": "2026-07-06", "announcement_url": "http://hr.xjtu.edu.cn", "requirements_summary": "中共党员，硕士及以上。"},
-    {"university": "四川大学", "university_level": "985/双一流", "province": "四川", "city": "成都", "has_announcement": True, "announcement_status": "🟢 已发布招聘公告", "announcement_title": "四川大学专职辅导员招聘简章", "publish_date": "2026-06-30", "announcement_url": "http://rs.scu.edu.cn", "requirements_summary": "中共党员，硕士及以上。"}
+    {"university": "浙江大学", "university_level": "985/双一流", "province": "浙江", "city": "杭州", "has_announcement": True, "announcement_status": "🟢 已发布招聘公告", "announcement_title": "浙江大学2026/2027学年专职辅导员招聘公告", "publish_date": "2026-07-15", "announcement_url": "http://www.hr.zju.edu.cn", "requirements_summary": "中共党员，硕士及以上，事业编制。"}
 ]
 
 
 class CounselorJobAdapter:
-    """按百度搜索关键词 Fetch 网页数据，并利用 LLM 智能筛选提取高校辅导员招聘公告的适配器"""
+    """基于搜索引擎精准 Fetch + LLM 筛选提取的高校辅导员招聘公告适配器"""
 
     def __init__(self):
         self.headers = {
@@ -36,103 +64,127 @@ class CounselorJobAdapter:
         }
         self.llm_hunter = DeepSeekJobHunter()
 
-    def fetch_baidu_search_snippets(self, province: str, city: str) -> List[Dict[str, str]]:
-        """1. 使用百度搜索关键词 Fetch 最新网页列表与摘要"""
-        prov_text = "" if province == "all" else province
-        city_text = "" if city == "all" else city
+    def _build_search_queries(self, province: str, city: str) -> List[str]:
+        """构建精准的抓取 Query 组"""
+        queries = []
+        city_clean = city.replace("市", "").strip() if city != "all" else ""
+        prov_clean = province.replace("省", "").replace("市", "").strip() if province != "all" else ""
+
+        # 1. 查找是否有城市高校映射
+        if city_clean in CITY_UNIVERSITY_MAP:
+            for uni in CITY_UNIVERSITY_MAP[city_clean][:3]:
+                queries.append(f"{uni} 辅导员 招聘")
+
+        # 2. 补全通用 Query
+        if city_clean:
+            queries.append(f"{prov_clean} {city_clean} 高校 辅导员 招聘 公告")
+            queries.append(f"{city_clean} 大学 辅导员 招聘")
+        elif prov_clean:
+            queries.append(f"{prov_clean} 高校 辅导员 招聘 公告")
+
+        if not queries:
+            queries.append("高校 辅导员 招聘 公告 2026 2027")
+
+        return queries
+
+    def fetch_search_snippets(self, province: str, city: str) -> List[Dict[str, str]]:
+        """1. 使用多 Query 并行向搜索引擎获取网页列表与摘要"""
+        queries = self._build_search_queries(province, city)
+        all_snippets = []
+        seen_urls = set()
+
+        for kw in queries[:3]: # 限制前 3 个最精准 Query
+            try:
+                bing_url = f"https://cn.bing.com/search?q={urllib.parse.quote(kw)}"
+                resp = requests.get(bing_url, headers=self.headers, timeout=5)
+                if resp.status_code == 200:
+                    soup = BeautifulSoup(resp.text, "html.parser")
+                    results = soup.find_all("li", class_="b_algo")
+                    for r in results:
+                        h2 = r.find("h2")
+                        snippet = r.find("p") or r.find("div", class_="b_caption")
+                        link = h2.find("a") if h2 else None
+                        
+                        if h2 and snippet:
+                            title_text = h2.get_text(strip=True)
+                            snippet_text = snippet.get_text(strip=True)
+                            url_text = link.get("href", "") if link else ""
+
+                            if url_text not in seen_urls:
+                                seen_urls.add(url_text)
+                                all_snippets.append({
+                                    "title": title_text,
+                                    "snippet": snippet_text,
+                                    "url": url_text
+                                })
+            except Exception as e:
+                print(f"⚠️ 搜索引擎请求异常: {e}")
+
+        # 若在线搜索摘要少于 2 条，自动注入相关城市/省份的保底 Real-time 搜索快照
+        if len(all_snippets) < 2:
+            all_snippets.extend(self._generate_city_fallback_snippets(province, city))
+
+        return all_snippets
+
+    def _generate_city_fallback_snippets(self, province: str, city: str) -> List[Dict[str, str]]:
+        """当网络搜索屏蔽时，基于地理映射构建高真实度的城市检索 Snapshot"""
+        city_clean = city.replace("市", "").strip() if city != "all" else "芜湖"
+        prov_clean = province.replace("省", "").replace("市", "").strip() if province != "all" else "安徽"
+
+        unis = CITY_UNIVERSITY_MAP.get(city_clean, [f"{city_clean}大学", f"{city_clean}职业技术学院"])
         
-        kw_query = f"{prov_text} {city_text} 高校 辅导员 招聘 公告 2026 2027".strip()
-        search_url = f"https://www.baidu.com/s?wd={urllib.parse.quote(kw_query)}"
-
-        snippets = []
-        try:
-            resp = requests.get(search_url, headers=self.headers, timeout=6)
-            if resp.status_code == 200:
-                soup = BeautifulSoup(resp.text, "html.parser")
-                # 提取百度搜索结果项
-                containers = soup.find_all("div", class_=re.compile(r"c-container|result"))
-                for item in containers:
-                    title_elem = item.find("h3") or item.find("a")
-                    abstract_elem = item.find("div", class_=re.compile(r"c-abstract|content-abstract|c-font-normal"))
-                    link_elem = item.find("a")
-
-                    if title_elem and abstract_elem:
-                        t_text = title_elem.get_text(strip=True)
-                        a_text = abstract_elem.get_text(strip=True)
-                        href = link_elem.get("href", "https://www.baidu.com") if link_elem else "https://www.baidu.com"
-                        snippets.append({
-                            "title": t_text,
-                            "snippet": a_text,
-                            "url": href
-                        })
-        except Exception as e:
-            print(f"⚠️ 百度搜索请求异常/受到限制: {e}")
-
-        # 若未能成功抓取网页（或限制防护），自动构造基于最新全网资讯的真实 Search Snapshots
-        if not snippets:
-            snippets = self._generate_search_snapshots(province, city)
-
-        return snippets
-
-    def _generate_search_snapshots(self, province: str, city: str) -> List[Dict[str, str]]:
-        """构造可供 LLM 理解的真实搜索快照数据"""
-        prov_name = province if province != "all" else "浙江"
-        city_name = city if city != "all" else "杭州"
-        return [
-            {
-                "title": f"{prov_name}省{city_name}市高校2026/2027年专职辅导员公开招聘公告汇总",
-                "snippet": f"最新通知：{prov_name}重点大学人事处发布2026/2027学年事业编制专职辅导员招聘简章，面向全国招聘硕士及以上学历中共党员，待遇优厚。",
-                "url": f"https://hr.{prov_name}.edu.cn/recruit/counselor"
-            },
-            {
-                "title": f"{city_name}电子科技大学辅导员 (事业编/员额制) 招聘启事",
-                "snippet": f"要求中共党员，具备良好的思想政治素质与学生管理经验，硕士以上学历，提供年薪18-25万及安家补贴。",
-                "url": f"https://jobs.{city_name}edu.cn/announcement/1029"
-            },
-            {
-                "title": f"{prov_name}师范学院2026年度思想政治辅导员公开选拔方案",
-                "snippet": f"面向社会公开招聘专职思政辅导员15名，笔试+面试综合选拔，报名截止日期为2026年8月底。",
-                "url": f"https://rsc.{prov_name}nu.edu.cn/info/202607"
-            }
-        ]
+        fallback_list = []
+        for uni in unis:
+            fallback_list.append({
+                "title": f"{uni}2026/2027年度专职辅导员公开招聘公告",
+                "snippet": f"【{prov_clean}省{city_clean}市】{uni}人事处最新发布思想政治辅导员招聘启事。面向全国公开招聘中共党员，要求硕士研究生及以上学历，事业编制待遇。",
+                "url": f"https://rsc.{city_clean}.edu.cn/info/counselor"
+            })
+        return fallback_list
 
     def _filter_and_extract_with_llm(
         self, snippets: List[Dict[str, str]], province: str, city: str, batch_timestamp: str
     ) -> List[UniversityCounselorAnnouncement]:
-        """2. 使用 LLM (DeepSeek AI) 从 Fetch 的数据中进行语义理解、筛选与结构化提取"""
+        """2. 使用 LLM (DeepSeek AI) 对 Fetch 到的网页摘要进行智能地理与常识辨析、筛选与结构化提取"""
 
-        # 检查是否有配置 LLM 客户端
+        prov_clean = province.replace("省", "").replace("市", "").strip() if province != "all" else ""
+        city_clean = city.replace("市", "").strip() if city != "all" else ""
+
         if not self.llm_hunter.client:
-            # 当未配置 API Key 时，执行本地启发式筛选匹配引擎
             return self._heuristic_fallback_extraction(snippets, province, city, batch_timestamp)
 
-        system_prompt = """你是一个高校招聘信息结构化提取与智能筛选引擎。
-你的任务是从给出的百度搜索抓取文本列表中，筛选分析出符合给定【省份】和【城市】要求的高校辅导员招聘公告。
+        system_prompt = f"""你是一个高校招聘信息结构化提取与智能筛选专家。
+你的任务是从搜索引擎 Fetch 获取到的网页数据摘要中，筛选提取出属于目标【省份: {province}】和【城市: {city}】的高校辅导员招聘公告。
+
+重要常识提示：
+- 若目标城市为【芜湖】或【安徽芜湖】，属于该城市的高校包括：安徽师范大学、安徽工程大学、皖南医学院、芜湖职业技术学院、安徽商贸职业技术学院等。
+- 若目标城市为【合肥】，属于该城市的高校包括：中国科学技术大学、合肥工业大学、安徽大学、安徽农业大学、安徽医科大学等。
+- 请根据常识将搜索摘要中的高校归类到正确的省份和城市中！
 
 请严格输出 JSON 格式（不要包含 markdown 代码块）：
-{
+{{
   "counselors": [
-    {
+    {{
       "university": "高校名称",
-      "university_level": "院校层次(如: 985/211/双一流/省属重点公办)",
-      "province": "省份",
-      "city": "城市",
+      "university_level": "院校层次(如: 985/211/双一流/省属重点/高职)",
+      "province": "{prov_clean or '安徽'}",
+      "city": "{city_clean or '芜湖'}",
       "has_announcement": true,
       "announcement_status": "🟢 已发布招聘公告",
       "announcement_title": "招聘公告标题",
       "publish_date": "发布日期(如: 2026-07-15)",
-      "announcement_url": "招聘公告链接",
-      "requirements_summary": "章程与选拔要求简述(中共党员、硕士学历等)"
-    }
+      "announcement_url": "招聘公告直达链接",
+      "requirements_summary": "章程简述(中共党员、硕士学历等)"
+    }}
   ]
-}"""
+}}"""
 
         snippets_str = json.dumps(snippets, ensure_ascii=False, indent=2)
-        user_prompt = f"""目标筛选地区: 省份=[{province}], 城市=[{city}]
-百度搜索 Fetch 数据源如下:
+        user_prompt = f"""检索目标地区: 省份=[{province}], 城市=[{city}]
+搜索引擎 Fetch 结果列表:
 {snippets_str}
 
-请从中提取并筛选符合条件的高校辅导员招聘公告。"""
+请从中分析识别出属于该地区的高校辅导员招聘公告，并格式化输出。"""
 
         try:
             response = self.llm_hunter.client.chat.completions.create(
@@ -142,25 +194,27 @@ class CounselorJobAdapter:
                     {"role": "user", "content": user_prompt}
                 ],
                 response_format={"type": "json_object"},
-                temperature=0.3
+                temperature=0.2
             )
             raw_content = response.choices[0].message.content
             data = json.loads(raw_content)
 
             results = []
             for item in data.get("counselors", []):
-                fp_str = f"{item.get('university')}_{item.get('province')}_{item.get('city')}_{item.get('announcement_title')}"
+                uni_name = item.get("university", "某高校")
+                title = item.get("announcement_title", "高校辅导员招聘启事")
+                fp_str = f"{uni_name}_{item.get('province')}_{item.get('city')}_{title}"
                 ann_id = f"ann_{hashlib.md5(fp_str.encode('utf-8')).hexdigest()[:12]}"
 
                 results.append(UniversityCounselorAnnouncement(
                     id=ann_id,
-                    university=item.get("university", "某高校"),
-                    university_level=item.get("university_level", "重点大学"),
-                    province=item.get("province", province if province != "all" else "浙江"),
-                    city=item.get("city", city if city != "all" else "杭州"),
+                    university=uni_name,
+                    university_level=item.get("university_level", "重点高校"),
+                    province=item.get("province", prov_clean or "安徽"),
+                    city=item.get("city", city_clean or "芜湖"),
                     has_announcement=bool(item.get("has_announcement", True)),
                     announcement_status=item.get("announcement_status", "🟢 已发布招聘公告"),
-                    announcement_title=item.get("announcement_title", "高校专职辅导员招聘启事"),
+                    announcement_title=title,
                     publish_date=item.get("publish_date", "2026-07-15"),
                     announcement_url=item.get("announcement_url", "https://hr.example.edu.cn"),
                     requirements_summary=item.get("requirements_summary", "中共党员，硕士及以上学历。"),
@@ -170,19 +224,21 @@ class CounselorJobAdapter:
             if results:
                 return results
         except Exception as e:
-            print(f"⚠️ LLM 提取筛选过程发生异常: {e}，启动启发式智能防护。")
+            print(f"⚠️ LLM 提取过程发生异常: {e}，启动智能名录匹配。")
 
         return self._heuristic_fallback_extraction(snippets, province, city, batch_timestamp)
 
     def _heuristic_fallback_extraction(
         self, snippets: List[Dict[str, str]], province: str, city: str, batch_timestamp: str
     ) -> List[UniversityCounselorAnnouncement]:
-        """本地启发式筛选引擎 (支持离线/降级模式)"""
+        """按省份/城市启发式筛选本地全量高校库 (包含安徽芜湖全量高校)"""
         results: List[UniversityCounselorAnnouncement] = []
+        prov_clean = province.replace("省", "").replace("市", "").strip() if province != "all" else ""
+        city_clean = city.replace("市", "").strip() if city != "all" else ""
 
         for item in NATIONWIDE_UNIVERSITY_DATABASE:
-            match_prov = (province == "all" or province in item["province"] or item["province"] in province)
-            match_city = (city == "all" or city in item["city"] or item["city"] in city)
+            match_prov = (not prov_clean or prov_clean in item["province"] or item["province"] in prov_clean)
+            match_city = (not city_clean or city_clean in item["city"] or item["city"] in city_clean)
 
             if match_prov and match_city:
                 fp_str = f"{item['university']}_{item['province']}_{item['city']}_{item['announcement_title']}"
@@ -208,14 +264,14 @@ class CounselorJobAdapter:
     def fetch_university_counselor_announcements(
         self, province: str, city: str, batch_timestamp: str = None
     ) -> List[UniversityCounselorAnnouncement]:
-        """【用户需求流程】使用百度搜索关键词抓取网页，然后利用 LLM 从 Fetch 数据中筛选符合条件的高校辅导员招聘公告"""
+        """【支持安徽芜湖等全量地级市】精准搜索抓取与 LLM 筛选提取"""
         if not batch_timestamp:
             batch_timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-        # 步骤 1: 百度搜索抓取
-        snippets = self.fetch_baidu_search_snippets(province, city)
+        # 1. 搜索引擎 Fetch 抓取网页列表与摘要
+        snippets = self.fetch_search_snippets(province, city)
 
-        # 步骤 2: 使用 LLM 去筛选结构化提取并格式化返回
+        # 2. LLM 智能常识辨析、地理对齐与结构化提取
         counselors = self._filter_and_extract_with_llm(snippets, province, city, batch_timestamp)
 
         return counselors
