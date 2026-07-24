@@ -116,7 +116,7 @@ python -m src.server
 
 | 💬 微信交流与问题反馈 | ❤️ 微信赞赏与支持 |
 | :---: | :---: |
-| <img src="docs/assets/wechat.png" width="220" alt="个人微信二维码" /> | <img src="docs/assets/sponsor_wechat.png" width="220" alt="微信赞赏收款码" /> |
+| <img src="docs/assets/wechat.jpg" width="220" alt="个人微信二维码" /> | <img src="docs/assets/sponsor_wechat.jpg" width="220" alt="微信赞赏收款码" /> |
 | 扫描二维码添加作者微信 | 扫描二维码给予作者赞赏支持 |
 
 </div>
