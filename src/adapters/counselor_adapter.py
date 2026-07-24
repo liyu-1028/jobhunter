@@ -3,7 +3,7 @@ import re
 import json
 import hashlib
 import urllib.parse
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 from datetime import datetime
 import requests
 from bs4 import BeautifulSoup
@@ -32,7 +32,7 @@ CITY_UNIVERSITY_MAP = {
     "西安": ["西安交通大学", "西北工业大学", "西安电子科技大学", "陕西师范大学", "西北大学"]
 }
 
-# 全量名录与应急数据库 (包含安徽芜湖全量院校)
+# 全量名录与应急数据库
 NATIONWIDE_UNIVERSITY_DATABASE = [
     # 安徽省 - 芜湖市
     {"university": "安徽师范大学", "university_level": "省属重点公办", "province": "安徽", "city": "芜湖", "has_announcement": True, "announcement_status": "🟢 已发布招聘公告", "announcement_title": "安徽师范大学2026/2027年度专职辅导员公开招聘公告", "publish_date": "2026-07-15", "announcement_url": "https://rsc.ahnu.edu.cn", "requirements_summary": "中共党员，硕士及以上学历，事业编制，思想政治或教育相关专业优先。"},
@@ -55,14 +55,15 @@ NATIONWIDE_UNIVERSITY_DATABASE = [
 
 
 class CounselorJobAdapter:
-    """基于搜索引擎精准 Fetch + LLM 筛选提取的高校辅导员招聘公告适配器"""
+    """基于搜索引擎精准 Fetch + LLM 筛选提取的高校辅导员招聘公告适配器 (支持动态传入 API Key)"""
 
-    def __init__(self):
+    def __init__(self, api_key: Optional[str] = None):
         self.headers = {
             "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
             "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8"
         }
-        self.llm_hunter = DeepSeekJobHunter()
+        self.api_key = api_key
+        self.llm_hunter = DeepSeekJobHunter(api_key=api_key)
 
     def _build_search_queries(self, province: str, city: str) -> List[str]:
         """构建精准的抓取 Query 组"""
@@ -70,12 +71,10 @@ class CounselorJobAdapter:
         city_clean = city.replace("市", "").strip() if city != "all" else ""
         prov_clean = province.replace("省", "").replace("市", "").strip() if province != "all" else ""
 
-        # 1. 查找是否有城市高校映射
         if city_clean in CITY_UNIVERSITY_MAP:
             for uni in CITY_UNIVERSITY_MAP[city_clean][:3]:
                 queries.append(f"{uni} 辅导员 招聘")
 
-        # 2. 补全通用 Query
         if city_clean:
             queries.append(f"{prov_clean} {city_clean} 高校 辅导员 招聘 公告")
             queries.append(f"{city_clean} 大学 辅导员 招聘")
@@ -93,7 +92,7 @@ class CounselorJobAdapter:
         all_snippets = []
         seen_urls = set()
 
-        for kw in queries[:3]: # 限制前 3 个最精准 Query
+        for kw in queries[:3]:
             try:
                 bing_url = f"https://cn.bing.com/search?q={urllib.parse.quote(kw)}"
                 resp = requests.get(bing_url, headers=self.headers, timeout=5)
@@ -120,14 +119,12 @@ class CounselorJobAdapter:
             except Exception as e:
                 print(f"⚠️ 搜索引擎请求异常: {e}")
 
-        # 若在线搜索摘要少于 2 条，自动注入相关城市/省份的保底 Real-time 搜索快照
         if len(all_snippets) < 2:
             all_snippets.extend(self._generate_city_fallback_snippets(province, city))
 
         return all_snippets
 
     def _generate_city_fallback_snippets(self, province: str, city: str) -> List[Dict[str, str]]:
-        """当网络搜索屏蔽时，基于地理映射构建高真实度的城市检索 Snapshot"""
         city_clean = city.replace("市", "").strip() if city != "all" else "芜湖"
         prov_clean = province.replace("省", "").replace("市", "").strip() if province != "all" else "安徽"
 
@@ -143,14 +140,14 @@ class CounselorJobAdapter:
         return fallback_list
 
     def _filter_and_extract_with_llm(
-        self, snippets: List[Dict[str, str]], province: str, city: str, batch_timestamp: str
+        self, snippets: List[Dict[str, str]], province: str, city: str, batch_timestamp: str, api_key: Optional[str] = None
     ) -> List[UniversityCounselorAnnouncement]:
-        """2. 使用 LLM (DeepSeek AI) 对 Fetch 到的网页摘要进行智能地理与常识辨析、筛选与结构化提取"""
-
         prov_clean = province.replace("省", "").replace("市", "").strip() if province != "all" else ""
         city_clean = city.replace("市", "").strip() if city != "all" else ""
 
-        if not self.llm_hunter.client:
+        llm_client = DeepSeekJobHunter(api_key=api_key or self.api_key)
+
+        if not llm_client.client:
             return self._heuristic_fallback_extraction(snippets, province, city, batch_timestamp)
 
         system_prompt = f"""你是一个高校招聘信息结构化提取与智能筛选专家。
@@ -187,7 +184,7 @@ class CounselorJobAdapter:
 请从中分析识别出属于该地区的高校辅导员招聘公告，并格式化输出。"""
 
         try:
-            response = self.llm_hunter.client.chat.completions.create(
+            response = llm_client.client.chat.completions.create(
                 model="deepseek-chat",
                 messages=[
                     {"role": "system", "content": system_prompt},
@@ -231,7 +228,6 @@ class CounselorJobAdapter:
     def _heuristic_fallback_extraction(
         self, snippets: List[Dict[str, str]], province: str, city: str, batch_timestamp: str
     ) -> List[UniversityCounselorAnnouncement]:
-        """按省份/城市启发式筛选本地全量高校库 (包含安徽芜湖全量高校)"""
         results: List[UniversityCounselorAnnouncement] = []
         prov_clean = province.replace("省", "").replace("市", "").strip() if province != "all" else ""
         city_clean = city.replace("市", "").strip() if city != "all" else ""
@@ -262,16 +258,12 @@ class CounselorJobAdapter:
         return results
 
     def fetch_university_counselor_announcements(
-        self, province: str, city: str, batch_timestamp: str = None
+        self, province: str, city: str, batch_timestamp: str = None, api_key: Optional[str] = None
     ) -> List[UniversityCounselorAnnouncement]:
-        """【支持安徽芜湖等全量地级市】精准搜索抓取与 LLM 筛选提取"""
         if not batch_timestamp:
             batch_timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-        # 1. 搜索引擎 Fetch 抓取网页列表与摘要
         snippets = self.fetch_search_snippets(province, city)
-
-        # 2. LLM 智能常识辨析、地理对齐与结构化提取
-        counselors = self._filter_and_extract_with_llm(snippets, province, city, batch_timestamp)
+        counselors = self._filter_and_extract_with_llm(snippets, province, city, batch_timestamp, api_key=api_key)
 
         return counselors

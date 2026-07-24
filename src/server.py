@@ -36,7 +36,7 @@ app.add_middleware(
 )
 
 db = JobDatabase()
-engine = create_default_engine()
+default_engine = create_default_engine()
 ent_manager = CentralEnterpriseManager()
 counselor_adapter = CounselorJobAdapter()
 renderer = HTMLReportRenderer()
@@ -45,6 +45,7 @@ renderer = HTMLReportRenderer()
 class CounselorFetchRequest(BaseModel):
     province: Optional[str] = "all"
     city: Optional[str] = "all"
+    api_key: Optional[str] = None
 
 
 class OptionalUserProfile(BaseModel):
@@ -57,6 +58,7 @@ class OptionalUserProfile(BaseModel):
     company_size: Optional[str] = "1000人以上"
     location: Optional[str] = "杭州"
     keywords: Optional[str] = "Python, 大模型"
+    api_key: Optional[str] = None
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -71,7 +73,7 @@ def index_page():
 
     if not os.path.exists(index_path):
         profile = UserProfile()
-        res = engine.search_all_sources(profile)
+        res = default_engine.search_all_sources(profile)
         renderer.render(res, history_jobs=db.get_all_jobs(), output_file=index_path)
 
     return FileResponse(index_path)
@@ -80,7 +82,7 @@ def index_page():
 # --- API 1: /api/search_jobs (支持 GET & POST) ---
 @app.api_route("/api/search_jobs", methods=["GET", "POST"])
 def api_search_jobs(profile: Optional[OptionalUserProfile] = None):
-    """【Tab 1】接收个人信息 Query，实时抓取并匹配岗位"""
+    """【Tab 1】接收个人信息 Query，实时抓取并匹配岗位 (支持网页用户专属 API Key)"""
     batch_timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
     if profile is None:
@@ -95,10 +97,17 @@ def api_search_jobs(profile: Optional[OptionalUserProfile] = None):
         company_type=profile.company_type or "大厂/国企",
         company_size=profile.company_size or "1000人以上",
         location=profile.location or "杭州",
-        keywords=profile.keywords or "Python"
+        keywords=profile.keywords or "Python",
+        api_key=profile.api_key
     )
 
-    search_res = engine.search_all_sources(user_prof)
+    # 若前端传来了用户专属 API Key，使用包含该 Key 的引擎，绝不消耗作者 Key
+    if user_prof.api_key:
+        active_engine = create_default_engine(api_key=user_prof.api_key)
+    else:
+        active_engine = default_engine
+
+    search_res = active_engine.search_all_sources(user_prof)
 
     for job in search_res.jobs:
         job.fetched_at = batch_timestamp
@@ -143,16 +152,18 @@ def api_fetch_enterprises():
 # --- API 3: /api/fetch_counselors (支持 GET & POST) ---
 @app.api_route("/api/fetch_counselors", methods=["GET", "POST"])
 def api_fetch_counselors(req: Optional[CounselorFetchRequest] = None):
-    """【Tab 3】按省份和城市实时 Fetch 最新高校辅导员招聘公告与链接"""
+    """【Tab 3】按省份和城市实时 Fetch 最新高校辅导员招聘公告与链接 (支持网页用户专属 API Key)"""
     batch_timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
     prov = req.province if (req and req.province) else "all"
     city = req.city if (req and req.city) else "all"
+    user_key = req.api_key if (req and req.api_key) else None
 
     anns = counselor_adapter.fetch_university_counselor_announcements(
         province=prov,
         city=city,
-        batch_timestamp=batch_timestamp
+        batch_timestamp=batch_timestamp,
+        api_key=user_key
     )
 
     db.save_counselor_announcements(anns, batch_timestamp=batch_timestamp)

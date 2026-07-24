@@ -11,6 +11,7 @@ class UserProfile(BaseModel):
     company_size: str = "1000人以上"
     location: str = "杭州"
     keywords: str = "Python, 大模型"
+    api_key: Optional[str] = None  # 用户专属 API Key
 
 class JobItem(BaseModel):
     id: str

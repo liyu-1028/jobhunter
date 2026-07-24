@@ -631,7 +631,7 @@
 
         <!-- SECTION 1: JOBS MATCHING VIEW -->
         <div id="view-jobs-section">
-            <!-- 个人求职意向设置表单 (已完全移除此区域所有图标) -->
+            <!-- 个人求职意向设置表单 (包含专属 API Key 安全存储) -->
             <section class="profile-form-panel">
                 <div class="panel-header">
                     <h3>个人求职偏好设置 (提交作为 Query 实时抓取)</h3>
@@ -672,6 +672,15 @@
                     <div class="form-item">
                         <label>技能关键词</label>
                         <input type="text" id="formKeywords" value="{{ profile.keywords or 'Python, 大模型' }}" placeholder="如: Python, 大模型, 算法" />
+                    </div>
+
+                    <!-- 专属 DeepSeek API Key 填写区 -->
+                    <div class="form-item" style="grid-column: span 2;">
+                        <label>🔑 个人 DeepSeek API Key (可选)</label>
+                        <input type="password" id="formApiKey" placeholder="sk-******************************** (若为空自动开启离线/Demo模式)" onchange="saveApiKeyToLocal()" />
+                        <span style="font-size: 0.74rem; color: #166534; font-weight: 600; display: block; margin-top: 4px;">
+                            🔒 <b>数据安全承诺</b>：您的密钥仅保存在您本地浏览器的 LocalStorage 中，不会传输或外泄给作者或第三方。
+                        </span>
                     </div>
                 </div>
             </section>
@@ -907,6 +916,21 @@
             ? ''
             : 'http://127.0.0.1:8000';
 
+        const LOCAL_STORAGE_KEY_NAME = 'jobhunter_user_api_key';
+
+        function saveApiKeyToLocal() {
+            const val = getElemValue('formApiKey', '');
+            localStorage.setItem(LOCAL_STORAGE_KEY_NAME, val);
+        }
+
+        function loadApiKeyFromLocal() {
+            const keyEl = document.getElementById('formApiKey');
+            const saved = localStorage.getItem(LOCAL_STORAGE_KEY_NAME);
+            if (keyEl && saved) {
+                keyEl.value = saved;
+            }
+        }
+
         function getElemValue(id, defaultVal = '') {
             const el = document.getElementById(id);
             return (el && el.value) ? el.value.trim() : defaultVal;
@@ -953,7 +977,8 @@
                 company_type: getElemValue('formCompanyType', '大厂/国企'),
                 company_size: '1000人以上',
                 location: getElemValue('formLocation', '杭州'),
-                keywords: getElemValue('formKeywords', 'Python, 大模型')
+                keywords: getElemValue('formKeywords', 'Python, 大模型'),
+                api_key: getElemValue('formApiKey', '')
             };
 
             showLoading(`⏳ 正在提交 Query [${profile.batch}] [${profile.company_type}] [${profile.location}] 发起匹配...`);
@@ -1082,6 +1107,7 @@
         async function fetchCounselorsFromApi() {
             const prov = getElemValue('counselorProvFilter', 'all');
             const city = getElemValue('counselorCityInput', 'all') || 'all';
+            const apiKey = getElemValue('formApiKey', '');
 
             showLoading(`⏳ 正在 Fetch [省份: ${prov}] [城市: ${city}] 最新高校辅导员招聘公告...`);
 
@@ -1089,7 +1115,7 @@
                 const res = await fetch(`${API_BASE}/api/fetch_counselors`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ province: prov, city: city })
+                    body: JSON.stringify({ province: prov, city: city, api_key: apiKey })
                 });
                 if (!res.ok) throw new Error(`HTTP Code: ${res.status}`);
                 const data = await res.json();
@@ -1223,6 +1249,7 @@
         }
 
         document.addEventListener('DOMContentLoaded', () => {
+            loadApiKeyFromLocal();
             applyJobFilters();
         });
     </script>
