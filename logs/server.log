@@ -1,32 +1,7 @@
 INFO:     Will watch for changes in these directories: ['/Users/liyanlong/code/MyIdea/jobhunter']
 INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
-INFO:     Started reloader process [77351] using StatReload
+INFO:     Started reloader process [78403] using StatReload
 🚀 正在启动 JobHunter 本地 HTTP API 服务器 (访问端口: 8000)...
-INFO:     Started server process [77354]
+INFO:     Started server process [78406]
 INFO:     Waiting for application startup.
 INFO:     Application startup complete.
-INFO:     127.0.0.1:61232 - "GET / HTTP/1.1" 200 OK
-INFO:     127.0.0.1:61265 - "GET / HTTP/1.1" 200 OK
-📦 已将本地全量数据导出至: /Users/liyanlong/code/MyIdea/jobhunter/output/data.json
-✅ 已成功刷新向数据库注入包含总部与行业的完整 245 所央企名录库！
-
-✨ 本地可视化页面已展示最新数据: /Users/liyanlong/code/MyIdea/jobhunter/output/index.html
-INFO:     127.0.0.1:61265 - "POST /api/search_jobs HTTP/1.1" 200 OK
-📦 已将本地全量数据导出至: /Users/liyanlong/code/MyIdea/jobhunter/output/data.json
-INFO:     127.0.0.1:61290 - "POST /api/fetch_counselors HTTP/1.1" 200 OK
-📦 已将本地全量数据导出至: /Users/liyanlong/code/MyIdea/jobhunter/output/data.json
-INFO:     127.0.0.1:61306 - "POST /api/fetch_counselors HTTP/1.1" 200 OK
-📦 已将本地全量数据导出至: /Users/liyanlong/code/MyIdea/jobhunter/output/data.json
-INFO:     127.0.0.1:61340 - "POST /api/fetch_counselors HTTP/1.1" 200 OK
-📦 已将本地全量数据导出至: /Users/liyanlong/code/MyIdea/jobhunter/output/data.json
-INFO:     127.0.0.1:61356 - "POST /api/fetch_counselors HTTP/1.1" 200 OK
-INFO:     127.0.0.1:61694 - "GET / HTTP/1.1" 200 OK
-📦 已将本地全量数据导出至: /Users/liyanlong/code/MyIdea/jobhunter/output/data.json
-INFO:     127.0.0.1:61817 - "POST /api/fetch_counselors HTTP/1.1" 200 OK
-INFO:     127.0.0.1:61887 - "GET / HTTP/1.1" 200 OK
-INFO:     127.0.0.1:61887 - "GET /favicon.ico HTTP/1.1" 404 Not Found
-✅ 已成功刷新向数据库注入包含总部与行业的完整 245 所央企名录库！
-📦 已将本地全量数据导出至: /Users/liyanlong/code/MyIdea/jobhunter/output/data.json
-✅ 已成功刷新向数据库注入包含总部与行业的完整 245 所央企名录库！
-INFO:     127.0.0.1:61888 - "POST /api/fetch_enterprises HTTP/1.1" 200 OK
-INFO:     127.0.0.1:62318 - "GET / HTTP/1.1" 200 OK
