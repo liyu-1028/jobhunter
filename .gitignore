@@ -8,14 +8,25 @@ build/
 dist/
 *.spec.bak
 
-# Database files
+# Database & Runtime output files
 *.db
 data/*.db
+data/*.pid
+
+# Generated output artifacts
+output/
+
+# macOS / System hidden files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
 
 # Logs
 logs/*.log
 
-# Environments
+# Environments & Local Keys
 .env
 .venv/
 venv/

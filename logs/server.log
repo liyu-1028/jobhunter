@@ -24,3 +24,12 @@ INFO:     Finished server process [81225]
 INFO:     Started server process [81230]
 INFO:     Waiting for application startup.
 INFO:     Application startup complete.
+INFO:     127.0.0.1:52791 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52837 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52837 - "GET /favicon.ico HTTP/1.1" 404 Not Found
+📦 已将本地全量数据导出至: /Users/liyanlong/code/MyIdea/jobhunter/output/data.json
+INFO:     127.0.0.1:64350 - "POST /api/fetch_counselors HTTP/1.1" 200 OK
+📦 已将本地全量数据导出至: /Users/liyanlong/code/MyIdea/jobhunter/output/data.json
+INFO:     127.0.0.1:64372 - "POST /api/fetch_counselors HTTP/1.1" 200 OK
+📦 已将本地全量数据导出至: /Users/liyanlong/code/MyIdea/jobhunter/output/data.json
+INFO:     127.0.0.1:64392 - "POST /api/fetch_counselors HTTP/1.1" 200 OK
