@@ -8,7 +8,7 @@ from rich.prompt import Prompt, Confirm
 from rich.table import Table
 
 from src.models import UserProfile
-from src.deepseek_client import DeepSeekJobHunter
+from src.engine import create_default_engine
 from src.renderer import HTMLReportRenderer
 from src.db import JobDatabase
 
@@ -109,8 +109,8 @@ def run_cli():
     load_dotenv()
     
     console.print(Panel.fit(
-        "[bold magenta]🚀 JobHunter - 智能岗位搜索与可视化投递助手[/bold magenta]\n"
-        "[dim]基于 DeepSeek AI 大模型引擎 + 本地 SQLite 历史库持久化存储[/dim]",
+        "[bold magenta]🚀 JobHunter - 多数据源智能岗位搜索与可视化投递助手[/bold magenta]\n"
+        "[dim]集成 DeepSeek AI + 牛客网 + 海投网多数据源聚合 | MD5 无感去重 | SQLite 持久化[/dim]",
         border_style="cyan"
     ))
 
@@ -148,21 +148,21 @@ def run_cli():
             api_key = user_input_key.strip()
             os.environ["DEEPSEEK_API_KEY"] = api_key
 
-    # 3. 启动大模型检索
-    hunter = DeepSeekJobHunter(api_key=api_key)
+    # 3. 启动多数据源引擎并发检索
+    engine = create_default_engine(api_key=api_key)
 
-    with console.status("[bold green]🤖 DeepSeek 正在联网检索分析最匹配的岗位，请稍候...", spinner="dots"):
-        result = hunter.search_jobs(profile)
+    with console.status("[bold green]🤖 多数据源引擎 (DeepSeek + 牛客网 + 海投网) 正在并发检索并去重，请稍候...", spinner="dots"):
+        result = engine.search_all_sources(profile)
 
     # 4. 持久化数据落库 SQLite
     db = JobDatabase()
     db.save_jobs(result.jobs)
     all_history_jobs = db.get_all_jobs()
 
-    console.print(f"\n[bold green]✅ 本次匹配出 {len(result.jobs)} 个精选岗位，已写入本地数据库！(历史全量库共 {len(all_history_jobs)} 个岗位)[/bold green]")
+    console.print(f"\n[bold green]✅ 多源并发检索完成！聚合去重后共得出 {len(result.jobs)} 个精选岗位！(历史数据库累计共 {len(all_history_jobs)} 个岗位)[/bold green]")
 
-    # 5. 渲染可视化 HTML 报告（集成历史数据全量检索）
+    # 5. 渲染可视化 HTML 报告（写入统一 output/index.html）
     renderer = HTMLReportRenderer()
     report_file = renderer.render(result, history_jobs=all_history_jobs, open_browser=True)
 
-    console.print("\n[bold cyan]🎉 任务完成！赶快去浏览器查看您的可视化岗位投递仪表盘吧！[/bold cyan]")
+    console.print("\n[bold cyan]🎉 任务完成！赶快去浏览器查看您的多维筛选投递仪表盘 (output/index.html) 吧！[/bold cyan]")
