@@ -8,7 +8,7 @@ if PROJECT_ROOT not in sys.path:
 
 from datetime import datetime
 from typing import Optional
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, FileResponse
 from pydantic import BaseModel
@@ -22,7 +22,7 @@ from src.renderer import HTMLReportRenderer
 
 app = FastAPI(title="JobHunter RESTful API Server", description="多维度岗位匹配、央国企及高校辅导员 Fetch 服务")
 
-# 解决浏览器 CORS 跨域限制
+# 全量开放 CORS 跨域限制
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -39,8 +39,20 @@ renderer = HTMLReportRenderer()
 
 
 class CounselorFetchRequest(BaseModel):
-    province: str = "all"
-    city: str = "all"
+    province: Optional[str] = "all"
+    city: Optional[str] = "all"
+
+
+class OptionalUserProfile(BaseModel):
+    degree: Optional[str] = "硕士"
+    school: Optional[str] = "浙江大学"
+    major: Optional[str] = "计算机"
+    batch: Optional[str] = "2026届秋招"
+    target_industry: Optional[str] = "互联网"
+    company_type: Optional[str] = "大厂/国企"
+    company_size: Optional[str] = "1000人以上"
+    location: Optional[str] = "杭州"
+    keywords: Optional[str] = "Python, 大模型"
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -54,12 +66,28 @@ def index_page():
     return FileResponse(index_path)
 
 
-@app.post("/api/search_jobs")
-def api_search_jobs(profile: UserProfile):
-    """【Tab 1】接收个人信息表单，实时并发抓取并匹配岗位"""
+# --- API 1: /api/search_jobs (支持 GET & POST) ---
+@app.api_route("/api/search_jobs", methods=["GET", "POST"])
+def api_search_jobs(profile: Optional[OptionalUserProfile] = None):
+    """【Tab 1】接收个人信息 Query，实时抓取并匹配岗位"""
     batch_timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-    search_res = engine.search_all_sources(profile)
+    if profile is None:
+        profile = OptionalUserProfile()
+
+    user_prof = UserProfile(
+        degree=profile.degree or "硕士",
+        school=profile.school or "浙江大学",
+        major=profile.major or "计算机",
+        batch=profile.batch or "2026届秋招",
+        target_industry=profile.target_industry or "互联网",
+        company_type=profile.company_type or "大厂/国企",
+        company_size=profile.company_size or "1000人以上",
+        location=profile.location or "杭州",
+        keywords=profile.keywords or "Python"
+    )
+
+    search_res = engine.search_all_sources(user_prof)
 
     for job in search_res.jobs:
         job.fetched_at = batch_timestamp
@@ -78,7 +106,8 @@ def api_search_jobs(profile: UserProfile):
     }
 
 
-@app.post("/api/fetch_enterprises")
+# --- API 2: /api/fetch_enterprises (支持 GET & POST) ---
+@app.api_route("/api/fetch_enterprises", methods=["GET", "POST"])
 def api_fetch_enterprises():
     """【Tab 2】刷新全量 245 家央国企招考状态与选拔章程"""
     batch_timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -100,14 +129,18 @@ def api_fetch_enterprises():
     }
 
 
-@app.post("/api/fetch_counselors")
-def api_fetch_counselors(req: CounselorFetchRequest):
+# --- API 3: /api/fetch_counselors (支持 GET & POST) ---
+@app.api_route("/api/fetch_counselors", methods=["GET", "POST"])
+def api_fetch_counselors(req: Optional[CounselorFetchRequest] = None):
     """【Tab 3】按省份和城市实时 Fetch 最新高校辅导员招聘公告与链接"""
     batch_timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
+    prov = req.province if (req and req.province) else "all"
+    city = req.city if (req and req.city) else "all"
+
     anns = counselor_adapter.fetch_university_counselor_announcements(
-        province=req.province,
-        city=req.city,
+        province=prov,
+        city=city,
         batch_timestamp=batch_timestamp
     )
 

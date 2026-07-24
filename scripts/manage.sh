@@ -21,18 +21,18 @@ PORT=8000
 mkdir -p "$PROJECT_DIR/data"
 mkdir -p "$LOG_DIR"
 
-# 获取服务当前 PID
+# 获取服务当前 PID (仅匹配 LISTEN 状态)
 get_pid() {
     if [ -f "$PID_FILE" ]; then
         PID=$(cat "$PID_FILE")
-        if ps -p "$PID" > /dev/null 2>&1; then
+        if [ -n "$PID" ] && ps -p "$PID" > /dev/null 2>&1; then
             echo "$PID"
             return
         fi
     fi
 
-    # 通过端口查询活动进程 PID (备用检查)
-    PID_ON_PORT=$(lsof -t -i:$PORT 2>/dev/null)
+    # 通过 LISTEN 状态的端口查询 PID
+    PID_ON_PORT=$(lsof -iTCP:$PORT -sTCP:LISTEN -t 2>/dev/null)
     if [ -n "$PID_ON_PORT" ]; then
         echo "$PID_ON_PORT"
         return
@@ -45,14 +45,13 @@ get_pid() {
 start_service() {
     PID=$(get_pid)
     if [ -n "$PID" ]; then
-        echo -e "\031[33m⚠️  JobHunter API 服务已经在运行中 (PID: $PID, 端口: $PORT)\033[0m"
+        echo -e "\033[33m⚠️  JobHunter API 服务已经在运行中 (PID: $PID, 端口: $PORT)\033[0m"
         echo -e "👉 浏览器打开体验: \033[36mhttp://127.0.0.1:$PORT\033[0m"
         return 0
     fi
 
     if [ ! -f "$VENV_PYTHON" ]; then
         echo -e "\033[31m❌ 错误: 未找到虚拟环境 Python: $VENV_PYTHON\033[0m"
-        echo "请先在项目根目录运行: python3 -m venv .venv && .venv/bin/pip install -r requirements.txt"
         exit 1
     fi
 
@@ -65,12 +64,14 @@ start_service() {
     
     sleep 2
 
-    if ps -p "$NEW_PID" > /dev/null 2>&1; then
-        echo -e "\033[32m✅ 服务启动成功！(PID: $NEW_PID)\033[0m"
+    ACTUAL_PID=$(get_pid)
+    if [ -n "$ACTUAL_PID" ]; then
+        echo -e "\033[32m✅ 服务启动成功！(PID: $ACTUAL_PID)\033[0m"
         echo -e "📄 运行日志路径: \033[34m$LOG_FILE\033[0m"
         echo -e "🌐 访问地址: \033[36mhttp://127.0.0.1:$PORT\033[0m"
     else
         echo -e "\033[31m❌ 启动失败，请查看日志: $LOG_FILE\033[0m"
+        cat "$LOG_FILE" | tail -n 10
         rm -f "$PID_FILE"
         exit 1
     fi
@@ -88,7 +89,6 @@ stop_service() {
     echo -e "🛑 正在停止 JobHunter API 服务 (PID: $PID)..."
     kill "$PID" 2>/dev/null
 
-    # 循环等待进程退出
     for i in {1..5}; do
         if ! ps -p "$PID" > /dev/null 2>&1; then
             echo -e "\033[32m✅ 服务已安全停止！\033[0m"
@@ -98,7 +98,6 @@ stop_service() {
         sleep 1
     done
 
-    # 强制杀死
     echo -e "\033[33m⚠️ 尝试强行终止进程 (kill -9)... \033[0m"
     kill -9 "$PID" 2>/dev/null
     rm -f "$PID_FILE"
@@ -116,7 +115,6 @@ status_service() {
     fi
 }
 
-# 命令分流处理
 case "$1" in
     start)
         start_service
@@ -133,15 +131,7 @@ case "$1" in
         status_service
         ;;
     *)
-        echo "=================================================="
-        echo " 🛠️  JobHunter 服务启停管理脚本"
-        echo "=================================================="
-        echo " 用法: $0 {start|stop|restart|status}"
-        echo "   start   : 启动后台 HTTP API 服务"
-        echo "   stop    : 停止后台 HTTP API 服务"
-        echo "   restart : 重启 HTTP API 服务"
-        echo "   status  : 查看服务当前运行状态"
-        echo "=================================================="
+        echo "用法: $0 {start|stop|restart|status}"
         exit 1
         ;;
 esac

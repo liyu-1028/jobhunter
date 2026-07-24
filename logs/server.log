@@ -1,36 +1,19 @@
 INFO:     Will watch for changes in these directories: ['/Users/liyanlong/code/MyIdea/jobhunter']
 INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
-INFO:     Started reloader process [75761] using StatReload
+INFO:     Started reloader process [76808] using StatReload
 🚀 正在启动 JobHunter 本地 HTTP API 服务器 (访问端口: 8000)...
-INFO:     Started server process [75764]
+INFO:     Started server process [76811]
 INFO:     Waiting for application startup.
 INFO:     Application startup complete.
-INFO:     127.0.0.1:59889 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60664 - "GET / HTTP/1.1" 200 OK
+✅ 已成功刷新向数据库注入包含总部与行业的完整 245 所央企名录库！
 📦 已将本地全量数据导出至: /Users/liyanlong/code/MyIdea/jobhunter/output/data.json
-INFO:     127.0.0.1:59901 - "POST /api/fetch_counselors HTTP/1.1" 200 OK
-WARNING:  StatReload detected changes in 'src/server.py'. Reloading...
-INFO:     Shutting down
-INFO:     Waiting for application shutdown.
-INFO:     Application shutdown complete.
-INFO:     Finished server process [75764]
-INFO:     Started server process [75981]
-INFO:     Waiting for application startup.
-INFO:     Application startup complete.
+✅ 已成功刷新向数据库注入包含总部与行业的完整 245 所央企名录库！
+INFO:     127.0.0.1:60665 - "POST /api/fetch_enterprises HTTP/1.1" 200 OK
 📦 已将本地全量数据导出至: /Users/liyanlong/code/MyIdea/jobhunter/output/data.json
-INFO:     127.0.0.1:60030 - "POST /api/fetch_counselors HTTP/1.1" 200 OK
-WARNING:  StatReload detected changes in 'tests/test_server.py'. Reloading...
-INFO:     Shutting down
-INFO:     Waiting for application shutdown.
-INFO:     Application shutdown complete.
-INFO:     Finished server process [75981]
-INFO:     Started server process [76048]
-INFO:     Waiting for application startup.
-INFO:     Application startup complete.
-WARNING:  StatReload detected changes in 'tests/test_server.py'. Reloading...
-INFO:     Shutting down
-INFO:     Waiting for application shutdown.
-INFO:     Application shutdown complete.
-INFO:     Finished server process [76048]
-INFO:     Started server process [76054]
-INFO:     Waiting for application startup.
-INFO:     Application startup complete.
+INFO:     127.0.0.1:60666 - "POST /api/fetch_counselors HTTP/1.1" 200 OK
+📦 已将本地全量数据导出至: /Users/liyanlong/code/MyIdea/jobhunter/output/data.json
+✅ 已成功刷新向数据库注入包含总部与行业的完整 245 所央企名录库！
+
+✨ 本地可视化页面已展示最新数据: /Users/liyanlong/code/MyIdea/jobhunter/output/index.html
+INFO:     127.0.0.1:60667 - "POST /api/search_jobs HTTP/1.1" 200 OK
