@@ -169,13 +169,20 @@ def api_fetch_counselors(req: Optional[CounselorFetchRequest] = None):
     db.save_counselor_announcements(anns, batch_timestamp=batch_timestamp)
     all_anns = db.get_all_counselor_announcements()
 
-    return {
+    response = {
         "status": "success",
         "fetched_at": batch_timestamp,
         "total_announcements": len(all_anns),
         "matched_count": len(anns),
         "counselors": all_anns
     }
+    # 诚实空态:本批次未抓取到任何公告时明确告知,绝不编造数据充数
+    if not anns:
+        response["message"] = (
+            f"暂未获取到【{prov}·{city}】的辅导员招聘公告。"
+            "已返回历史数据；可尝试扩大查询范围（如 province=all）或稍后重试"
+        )
+    return response
 
 
 @app.get("/api/history")

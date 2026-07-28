@@ -3,11 +3,14 @@ from src.adapters.counselor_adapter import CounselorJobAdapter
 from src.db import JobDatabase
 
 def test_baidu_search_snippets_fetch():
+    # 重构后诚实返回: 无网络/被反爬时返回空列表, 绝不编造兜底摘要
     adapter = CounselorJobAdapter()
     snippets = adapter.fetch_search_snippets(province="安徽", city="芜湖")
-    assert len(snippets) > 0
-    assert "title" in snippets[0]
-    assert "snippet" in snippets[0]
+    assert isinstance(snippets, list)
+    if snippets:
+        assert "title" in snippets[0]
+        assert "snippet" in snippets[0]
+        assert "url" in snippets[0]
 
 def test_counselor_announcements_anhui_wuhu_precision():
     adapter = CounselorJobAdapter()

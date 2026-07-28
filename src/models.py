@@ -43,6 +43,8 @@ class UniversityCounselorAnnouncement(BaseModel):
     announcement_url: str = "#"       # 公告/人事处链接
     requirements_summary: str = ""    # 选拔章程/要求简述
     fetched_at: str = ""              # 查询批次时间戳
+    source: str = "unknown"           # 数据来源 (bing/Gaoxiaojob/uni_hr/curated)
+    verified: bool = False            # 高校名是否通过名录校验
 
 class SearchResult(BaseModel):
     search_time: str

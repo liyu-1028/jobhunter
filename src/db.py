@@ -62,9 +62,21 @@ class JobDatabase:
                 announcement_url TEXT,
                 requirements_summary TEXT,
                 fetched_at TEXT,
-                created_at TEXT
+                created_at TEXT,
+                source TEXT DEFAULT 'unknown',
+                verified INTEGER DEFAULT 0
             )
             """)
+
+            # 存量数据库增量升级:安全补充新列 (保留已有数据,不重建表)
+            for col, ddl in (
+                ("source", "ALTER TABLE university_counselor_announcements ADD COLUMN source TEXT DEFAULT 'unknown'"),
+                ("verified", "ALTER TABLE university_counselor_announcements ADD COLUMN verified INTEGER DEFAULT 0"),
+            ):
+                try:
+                    conn.execute(f"SELECT {col} FROM university_counselor_announcements LIMIT 1")
+                except sqlite3.OperationalError:
+                    conn.execute(ddl)
             conn.commit()
 
     def save_jobs(self, jobs: List[JobItem], batch_timestamp: str = None) -> int:
@@ -113,18 +125,21 @@ class JobDatabase:
                 INSERT INTO university_counselor_announcements (
                     id, university, university_level, province, city, has_announcement,
                     announcement_status, announcement_title, publish_date, announcement_url,
-                    requirements_summary, fetched_at, created_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now', 'localtime'))
+                    requirements_summary, fetched_at, created_at, source, verified
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now', 'localtime'), ?, ?)
                 ON CONFLICT(id) DO UPDATE SET
                     announcement_status=excluded.announcement_status,
                     announcement_title=excluded.announcement_title,
                     publish_date=excluded.publish_date,
                     announcement_url=excluded.announcement_url,
-                    fetched_at=excluded.fetched_at
+                    fetched_at=excluded.fetched_at,
+                    source=excluded.source,
+                    verified=excluded.verified
                 """, (
                     ann.id, ann.university, ann.university_level, ann.province, ann.city,
                     1 if ann.has_announcement else 0, ann.announcement_status, ann.announcement_title,
-                    ann.publish_date, ann.announcement_url, ann.requirements_summary, fetched_at
+                    ann.publish_date, ann.announcement_url, ann.requirements_summary, fetched_at,
+                    ann.source, 1 if ann.verified else 0
                 ))
             conn.commit()
 
