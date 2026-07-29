@@ -635,7 +635,7 @@
             <section class="profile-form-panel">
                 <div class="panel-header">
                     <h3>个人求职偏好设置 (提交作为 Query 实时抓取)</h3>
-                    <button class="btn-action-primary" onclick="fetchJobsFromApi()">
+                    <button class="btn-action-primary" id="btnFetchJobs" onclick="fetchJobsFromApi()">
                         提交 Query 并 Fetch 最新匹配岗位
                     </button>
                 </div>
@@ -761,7 +761,7 @@
                         </select>
                     </div>
 
-                    <button class="btn-action-secondary" onclick="fetchEnterprisesFromApi()">
+                    <button class="btn-action-secondary" id="btnFetchEnterprises" onclick="fetchEnterprisesFromApi()">
                         🔄 实时 Fetch 最新央企 2027 招考状态
                     </button>
                 </div>
@@ -847,7 +847,7 @@
                         </select>
                     </div>
 
-                    <button class="btn-action-secondary" onclick="fetchCounselorsFromApi()">
+                    <button class="btn-action-secondary" id="btnFetchCounselors" onclick="fetchCounselorsFromApi()">
                         🔍 检索 / Fetch 最新高校辅导员招聘公告
                     </button>
                 </div>
@@ -948,6 +948,17 @@
             if (banner) banner.style.display = 'none';
         }
 
+        // 请求级互斥锁: 防止重复点击触发并发 Fetch (三个按钮各自独立)
+        const fetchLocks = { jobs: false, enterprises: false, counselors: false };
+
+        function setButtonBusy(buttonId, busy) {
+            const btn = document.getElementById(buttonId);
+            if (!btn) return;
+            btn.disabled = busy;
+            btn.style.opacity = busy ? '0.6' : '';
+            btn.style.cursor = busy ? 'not-allowed' : '';
+        }
+
         function switchMainView(view) {
             document.querySelectorAll('.nav-tab-btn').forEach(b => b.classList.remove('active'));
             const navBtn = document.getElementById(`nav-${view}`);
@@ -968,6 +979,13 @@
 
         // --- FETCH API METHOD 1: POST /api/search_jobs ---
         async function fetchJobsFromApi() {
+            if (fetchLocks.jobs) {
+                alert('⏳ 已有正在进行的匹配请求，请勿重复提交，等待当前检索完成！');
+                return;
+            }
+            fetchLocks.jobs = true;
+            setButtonBusy('btnFetchJobs', true);
+
             const profile = {
                 degree: getElemValue('formDegree', '硕士'),
                 school: getElemValue('formSchool', '浙江大学'),
@@ -1000,6 +1018,8 @@
                 console.error('Fetch error:', err);
                 alert(`⚠️ API 通信失败 (${err.message})。\n👉 请确认运行: ./scripts/start.sh 开启后台服务！`);
             } finally {
+                fetchLocks.jobs = false;
+                setButtonBusy('btnFetchJobs', false);
                 hideLoading();
             }
         }
@@ -1051,6 +1071,13 @@
 
         // --- FETCH API METHOD 2: POST /api/fetch_enterprises ---
         async function fetchEnterprisesFromApi() {
+            if (fetchLocks.enterprises) {
+                alert('⏳ 已有正在进行的状态刷新请求，请勿重复点击，等待当前检索完成！');
+                return;
+            }
+            fetchLocks.enterprises = true;
+            setButtonBusy('btnFetchEnterprises', true);
+
             showLoading('⏳ 正在 Fetch 全量 245 家央国企最新 2027 届招考状态与章程...');
 
             try {
@@ -1066,6 +1093,8 @@
                 console.error('Fetch error:', err);
                 alert(`⚠️ API 通信失败 (${err.message})。\n👉 请确认运行: ./scripts/start.sh 开启后台服务！`);
             } finally {
+                fetchLocks.enterprises = false;
+                setButtonBusy('btnFetchEnterprises', false);
                 hideLoading();
             }
         }
@@ -1105,6 +1134,13 @@
 
         // --- FETCH API METHOD 3: POST /api/fetch_counselors ---
         async function fetchCounselorsFromApi() {
+            if (fetchLocks.counselors) {
+                alert('⏳ 已有正在进行的公告检索请求，请勿重复点击，等待当前检索完成！');
+                return;
+            }
+            fetchLocks.counselors = true;
+            setButtonBusy('btnFetchCounselors', true);
+
             const prov = getElemValue('counselorProvFilter', 'all');
             const city = getElemValue('counselorCityInput', 'all') || 'all';
             const apiKey = getElemValue('formApiKey', '');
@@ -1128,6 +1164,8 @@
                 console.error('Fetch error:', err);
                 alert(`⚠️ API 通信失败 (${err.message})。\n👉 请确认运行: ./scripts/start.sh 开启后台服务！`);
             } finally {
+                fetchLocks.counselors = false;
+                setButtonBusy('btnFetchCounselors', false);
                 hideLoading();
             }
         }
