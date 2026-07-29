@@ -17,6 +17,11 @@ else:
 if BASE_DIR not in sys.path:
     sys.path.insert(0, BASE_DIR)
 
+from dotenv import load_dotenv
+
+# 装载本地 .env 配置 (EXE 打包环境下无 .env 时自动跳过)
+load_dotenv()
+
 from src.server import app
 
 def find_available_port(start_port: int = 8000) -> int:

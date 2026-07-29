@@ -27,8 +27,11 @@ class JobItem(BaseModel):
     requirements: List[str] = []
     tags: List[str] = []
     apply_url: str = "#"
-    source: str = "deepseek"
+    source: str = "unknown"          # 数据来源 (serper/tavily/bigtech/nowcoder/wechat_rss/...)
     fetched_at: str = ""  # 查询批次时间戳
+    description: str = ""            # 岗位原始描述简述
+    publish_date: str = ""           # 岗位发布日期
+    verified: bool = False           # 是否通过 URL 溯源校验
 
 class UniversityCounselorAnnouncement(BaseModel):
     id: str

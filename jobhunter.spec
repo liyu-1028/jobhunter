@@ -13,6 +13,8 @@ os.makedirs('output', exist_ok=True)
 added_files = [
     ('templates', 'templates'),
     ('output', 'output'),
+    # 人工收录公告数据 (辅导员引擎 CuratedSource 运行期读取; 修复 v1.1.0 未打包缺陷)
+    ('data/curated_announcements.json', 'data'),
 ]
 
 # 隐式依赖

@@ -43,7 +43,10 @@ class JobDatabase:
                 apply_url TEXT,
                 source TEXT,
                 fetched_at TEXT,
-                created_at TEXT
+                created_at TEXT,
+                description TEXT DEFAULT '',
+                publish_date TEXT DEFAULT '',
+                verified INTEGER DEFAULT 0
             )
             """)
 
@@ -77,6 +80,17 @@ class JobDatabase:
                     conn.execute(f"SELECT {col} FROM university_counselor_announcements LIMIT 1")
                 except sqlite3.OperationalError:
                     conn.execute(ddl)
+
+            # jobs 表存量升级:安全补充岗位引擎重构新增列 (保留已有数据)
+            for col, ddl in (
+                ("description", "ALTER TABLE jobs ADD COLUMN description TEXT DEFAULT ''"),
+                ("publish_date", "ALTER TABLE jobs ADD COLUMN publish_date TEXT DEFAULT ''"),
+                ("verified", "ALTER TABLE jobs ADD COLUMN verified INTEGER DEFAULT 0"),
+            ):
+                try:
+                    conn.execute(f"SELECT {col} FROM jobs LIMIT 1")
+                except sqlite3.OperationalError:
+                    conn.execute(ddl)
             conn.commit()
 
     def save_jobs(self, jobs: List[JobItem], batch_timestamp: str = None) -> int:
@@ -94,17 +108,22 @@ class JobDatabase:
                 INSERT INTO jobs (
                     id, company, title, company_type, company_size, location, salary,
                     batch, match_score, recommend_reason, requirements_json, tags_json,
-                    apply_url, source, fetched_at, created_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now', 'localtime'))
+                    apply_url, source, fetched_at, created_at, description, publish_date, verified
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now', 'localtime'), ?, ?, ?)
                 ON CONFLICT(id) DO UPDATE SET
                     match_score=excluded.match_score,
                     recommend_reason=excluded.recommend_reason,
                     salary=excluded.salary,
-                    fetched_at=excluded.fetched_at
+                    fetched_at=excluded.fetched_at,
+                    source=excluded.source,
+                    description=excluded.description,
+                    publish_date=excluded.publish_date,
+                    verified=excluded.verified
                 """, (
                     job.id, job.company, job.title, job.company_type, job.company_size,
                     job.location, job.salary, job.batch, job.match_score, job.recommend_reason,
-                    req_json, tags_json, job.apply_url, job.source, fetched_at
+                    req_json, tags_json, job.apply_url, job.source, fetched_at,
+                    job.description, job.publish_date, 1 if job.verified else 0
                 ))
                 inserted_count += 1
             conn.commit()

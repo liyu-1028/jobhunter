@@ -12,7 +12,11 @@ if PROJECT_ROOT not in sys.path:
 
 from datetime import datetime
 from typing import Optional
+from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Request
+
+# 装载本地 .env 配置 (DeepSeek / Serper / Tavily Key); 不覆盖已存在的环境变量
+load_dotenv()
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, FileResponse
 from pydantic import BaseModel
@@ -117,13 +121,20 @@ def api_search_jobs(profile: Optional[OptionalUserProfile] = None):
 
     renderer.render(search_res, history_jobs=all_history)
 
-    return {
+    response = {
         "status": "success",
         "fetched_at": batch_timestamp,
         "total_jobs": len(all_history),
         "new_matched": len(search_res.jobs),
         "jobs": all_history
     }
+    # 诚实空态:本批次未抓取到任何真实岗位时明确告知, 绝不编造数据充数
+    if not search_res.jobs:
+        response["message"] = (
+            "本次未抓取到匹配的岗位。请确认 SERPER_API_KEY / TAVILY_API_KEY 配置，"
+            "或尝试调整岗位关键词、期望城市后重试"
+        )
+    return response
 
 
 # --- API 2: /api/fetch_enterprises (支持 GET & POST) ---

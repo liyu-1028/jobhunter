@@ -6,6 +6,7 @@ from src.adapters.base import BaseJobSourceAdapter
 from src.adapters.deepseek_adapter import DeepSeekAdapter
 from src.adapters.nowcoder import NowcoderAdapter
 from src.adapters.haitou import HaitouAdapter
+from src.adapters.job_search_adapter import JobSearchAdapter
 
 
 class MultiSourceJobEngine:
@@ -60,10 +61,11 @@ class MultiSourceJobEngine:
         )
 
 
-def create_default_engine(api_key: str = None) -> MultiSourceJobEngine:
-    """创建默认集成了 DeepSeek, 牛客网, 海投网的多数据源引擎实例"""
-    engine = MultiSourceJobEngine()
-    engine.register_adapter(DeepSeekAdapter(api_key=api_key))
-    engine.register_adapter(NowcoderAdapter())
-    engine.register_adapter(HaitouAdapter())
-    return engine
+def create_default_engine(api_key: str = None) -> JobSearchAdapter:
+    """创建默认岗位搜索引擎 (Serper/Tavily 多源真实搜索 + 五层校验管线).
+
+    返回的 JobSearchAdapter 与旧版 MultiSourceJobEngine 方法签名一致
+    (search_all_sources(profile) -> SearchResult), 调用方零改动。
+    旧版 MultiSourceJobEngine 与假数据适配器保留至 P1 阶段统一删除。
+    """
+    return JobSearchAdapter(api_key=api_key)

@@ -17,6 +17,10 @@ from src.renderer import HTMLReportRenderer
 from src.db import JobDatabase
 from src.adapters.counselor_adapter import CounselorJobAdapter
 
+# 装载本地 .env 配置 (DeepSeek / Serper / Tavily Key)
+from dotenv import load_dotenv
+load_dotenv()
+
 console = Console()
 
 def run_cli():
